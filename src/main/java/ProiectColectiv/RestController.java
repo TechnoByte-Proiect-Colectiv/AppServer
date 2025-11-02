@@ -1,4 +1,4 @@
-package ProiectColectiv.Repository;
+package ProiectColectiv;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
