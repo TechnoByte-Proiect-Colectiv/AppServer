@@ -5,7 +5,7 @@ public class Product extends Entity<Integer>
 {
     private String name;
     private String description;
-    private Integer price;
+    private Float price;
     private Integer quantity;
     private Integer nrSold;
     /// private Integer idSeller;
@@ -25,11 +25,11 @@ public class Product extends Entity<Integer>
         this.description = description;
     }
 
-    public Integer getPrice() {
+    public Float getPrice() {
         return price;
     }
 
-    public void setPrice(Integer price) {
+    public void setPrice(Float price) {
         this.price = price;
     }
 
@@ -49,7 +49,7 @@ public class Product extends Entity<Integer>
         this.nrSold = nrSold;
     }
 
-    public Product(String name, String description, Integer price, Integer quantity, Integer nrSold) {
+    public Product(String name, String description, Float price, Integer quantity, Integer nrSold) {
         this.name = name;
         this.description = description;
         this.price = price;
