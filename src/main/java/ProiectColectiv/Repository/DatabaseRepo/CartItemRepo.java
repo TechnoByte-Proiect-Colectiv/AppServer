@@ -127,8 +127,8 @@ public class CartItemRepo implements ICartItemRepo {
 
         try (PreparedStatement ps = conn.prepareStatement("DELETE FROM CartItem WHERE userID = ?")) {
 
-            ps.setString(1, userID); // Setăm parametrul userID
-            ps.executeUpdate(); // Executăm ștergerea
+            ps.setString(1, userID); // setez parametrul userID
+            ps.executeUpdate(); // execut ștergerea
 
         } catch (SQLException e) {
             System.err.println("Error DB " + e.getMessage());
