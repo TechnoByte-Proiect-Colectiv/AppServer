@@ -21,7 +21,7 @@ public class OrderRepo implements IOrderRepo {
     @Override
     public Order findById(CompositeKey<String,Integer> compositeKey) {
         Connection con = dbUtils.getConnection();
-        try (PreparedStatement preStmt=con.prepareStatement("select * from Orders where id=?")){
+        try (PreparedStatement preStmt=con.prepareStatement("select * from Orders WHERE userID = ? AND productID = ?")){
 
             /// aici este mai sus :))
             preStmt.setString(1, compositeKey.key1()); // key1 este userID (String)
