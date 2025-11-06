@@ -2,13 +2,14 @@ package ProiectColectiv.Repository.DatabaseRepo;
 
 import ProiectColectiv.Domain.Product;
 import ProiectColectiv.Repository.Interfaces.IProductRepo;
+import ProiectColectiv.Repository.Utils.Filter;
 import ProiectColectiv.Repository.Utils.JdbcUtils;
+import javax0.levenshtein.Levenshtein;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -18,30 +19,6 @@ public class ProductRepo implements IProductRepo {
 
     public ProductRepo(Properties properties) {
         dbUtils = new JdbcUtils(properties);
-    }
-
-    @Override
-    public Iterable<Product> findAll() {
-        List<Product> products = new ArrayList<>();
-        Connection con = dbUtils.getConnection();
-        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM Products")){
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Product product = new Product(
-                            rs.getString("name"),
-                            rs.getString("description"),
-                            rs.getFloat("price"),
-                            rs.getInt("nrItems"),
-                            rs.getInt("nrSold")
-                    );
-                    product.setId(rs.getInt("id"));
-                    products.add(product);
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println(e.getMessage());
-        }
-        return products;
     }
 
     @Override
@@ -107,5 +84,91 @@ public class ProductRepo implements IProductRepo {
         } catch (SQLException e) {
             System.err.println(e.getMessage());
         }
+    }
+
+    @Override
+    public Iterable<Product> getMostSoldProducts(int nr) {
+        List<Product> products = new ArrayList<>();
+        Connection con = dbUtils.getConnection();
+        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM Products ORDER BY nrSold DESC LIMIT ?")){
+            ps.setInt(1,nr);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Product product = new Product(
+                            rs.getString("name"),
+                            rs.getString("description"),
+                            rs.getFloat("price"),
+                            rs.getInt("nrItems"),
+                            rs.getInt("nrSold")
+                    );
+                    product.setId(rs.getInt("id"));
+                    products.add(product);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+        return products;
+    }
+
+    @Override
+    public Iterable<Product> filteredSearch(Filter filter,String searchInput) {
+
+        StringBuilder condition = new StringBuilder();
+        List<Integer> params = new ArrayList<>();
+        if(filter!=null) {
+            condition = new StringBuilder(" WHERE 1=1");
+            if(filter.isFilterInStock())
+                condition.append(" AND nrItems > 0");
+            if(filter.isFilterPriceLower()) {
+                condition.append(" AND price < ?");
+                params.add(filter.getPriceLower());
+            }
+            if(filter.isFilterPriceHigher()) {
+                condition.append(" AND price > ?");
+                params.add(filter.getPriceHigher());
+            }
+        }
+
+        List<Product> products = new ArrayList<>();
+        Connection con = dbUtils.getConnection();
+        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM Products" + condition)) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setInt(i+1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Product product = new Product(
+                            rs.getString("name"),
+                            rs.getString("description"),
+                            rs.getFloat("price"),
+                            rs.getInt("nrItems"),
+                            rs.getInt("nrSold")
+                    );
+                    product.setId(rs.getInt("id"));
+                    int matches = 0;
+                    searchInput = searchInput == null ? "" : searchInput.strip().replaceAll("\\s+"," ").toLowerCase();
+                    if (searchInput.isEmpty()) {
+                        products.add(product);
+                        continue;
+                    }
+                    String[] inputWords = searchInput.split(" ");
+                    String[] nameWords = product.getName().strip().replaceAll("\\s+"," ").toLowerCase().split(" ");
+                    for (String inputWord : inputWords) {
+                        for (String nameWord : nameWords) {
+                            if (Levenshtein.distance(inputWord, nameWord) < 3) {
+                                matches++;
+                                break;
+                            }
+                        }
+                    }
+                    if ((double) matches / inputWords.length >= 0.7)
+                        products.add(product);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+        return products;
     }
 }
