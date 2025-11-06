@@ -1,7 +1,4 @@
 package ProiectColectiv.Domain;
-import org.hibernate.sql.ast.tree.predicate.BooleanExpressionPredicate;
-
-import java.time.LocalDate;
 
 public class Order extends Entity<CompositeKey<String,Integer>>{
     private String userID;

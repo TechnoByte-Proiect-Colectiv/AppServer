@@ -1,5 +1,4 @@
 package ProiectColectiv.Domain;
-import com.google.gson.Gson;
 
 public class Product extends Entity<Integer>
 {

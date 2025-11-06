@@ -3,8 +3,6 @@ package ProiectColectiv.Repository.DatabaseRepo;
 import ProiectColectiv.Domain.User;
 import ProiectColectiv.Repository.Interfaces.IUserRepo;
 import ProiectColectiv.Repository.Utils.JdbcUtils;
-
-import java.lang.reflect.Parameter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
