@@ -23,7 +23,7 @@ public class CartItemRepo implements ICartItemRepo {
     @Override
     public CartItem findById(CompositeKey<String,Integer> compositeKey) {
         Connection con = dbUtils.getConnection();
-        try (PreparedStatement preStmt = con.prepareStatement("select * from CartItem where id=?")) {
+        try (PreparedStatement preStmt = con.prepareStatement("select * from CartItem WHERE userID = ? AND productID = ?")) {
 
             /// aici este mai sus :))
             preStmt.setString(1, compositeKey.key1()); // key1 este userID (String)

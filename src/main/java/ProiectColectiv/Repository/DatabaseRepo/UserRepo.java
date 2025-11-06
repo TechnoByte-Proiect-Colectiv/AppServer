@@ -47,13 +47,14 @@ public class UserRepo implements IUserRepo {
         Connection con = dbUtils.getConnection();
         LocalDateTime lastLogin = entity.getLastLogin();
         LocalDate dateCreated = entity.getDateCreated();
-        try (PreparedStatement ps = con.prepareStatement("INSERT INTO PRODUCTS(password,isAdmin,authToken,lastLogin,adress,dateCreated) values (?,?,?,?,?,?)")){
-            ps.setString(1,entity.getPassword());
-            ps.setBoolean(2,entity.isAdmin());
-            ps.setString(3,entity.getAuthToken());
-            ps.setObject(4,lastLogin);
-            ps.setString(5,entity.getAdress());
-            ps.setObject(6,dateCreated);
+        try (PreparedStatement ps = con.prepareStatement("INSERT INTO PRODUCTS(id,password,isAdmin,authToken,lastLogin,adress,dateCreated) values (?,?,?,?,?,?,?)")){
+            ps.setString(1,entity.getId());
+            ps.setString(2,entity.getPassword());
+            ps.setBoolean(3,entity.isAdmin());
+            ps.setString(4,entity.getAuthToken());
+            ps.setObject(5,lastLogin);
+            ps.setString(6,entity.getAdress());
+            ps.setObject(7,dateCreated);
         }
         catch (SQLException e) {
             System.err.println(e.getMessage());
@@ -65,13 +66,14 @@ public class UserRepo implements IUserRepo {
         Connection con = dbUtils.getConnection();
         LocalDateTime lastLogin = entity.getLastLogin();
         LocalDate dateCreated = entity.getDateCreated();
-        try (PreparedStatement ps = con.prepareStatement("INSERT INTO PRODUCTS(password,isAdmin,authToken,lastLogin,adress,dateCreated) values (?,?,?,?,?,?)")){
+        try (PreparedStatement ps = con.prepareStatement("UPDATE Users SET password=?, isAdmin=?, authToken=?, lastLogin=?, adress=?, dateCreated=? WHERE id=?")){
             ps.setString(1,entity.getPassword());
             ps.setBoolean(2,entity.isAdmin());
             ps.setString(3,entity.getAuthToken());
             ps.setObject(4,lastLogin);
             ps.setString(5,entity.getAdress());
             ps.setObject(6,dateCreated);
+            ps.setString(7, entity.getId());
             ps.executeUpdate();
         }
         catch (SQLException e) {
