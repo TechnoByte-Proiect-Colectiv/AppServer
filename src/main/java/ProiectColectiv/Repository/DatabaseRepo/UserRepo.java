@@ -47,7 +47,7 @@ public class UserRepo implements IUserRepo {
         Connection con = dbUtils.getConnection();
         LocalDateTime lastLogin = entity.getLastLogin();
         LocalDate dateCreated = entity.getDateCreated();
-        try (PreparedStatement ps = con.prepareStatement("INSERT INTO PRODUCTS(id,password,isAdmin,authToken,lastLogin,adress,dateCreated) values (?,?,?,?,?,?,?)")){
+        try (PreparedStatement ps = con.prepareStatement("INSERT INTO USER(email,password,isAdmin,authToken,lastLogin,adress,dateCreated) values (?,?,?,?,?,?,?)")){
             ps.setString(1,entity.getId());
             ps.setString(2,entity.getPassword());
             ps.setBoolean(3,entity.isAdmin());
