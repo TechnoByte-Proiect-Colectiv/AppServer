@@ -24,6 +24,9 @@ dependencies {
 
     // https://mvnrepository.com/artifact/com.javax0/levenshtein
     implementation("com.javax0:levenshtein:1.0.0")
+
+    // https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc
+    implementation 'org.xerial:sqlite-jdbc:3.49.1.0'
 }
 
 test {

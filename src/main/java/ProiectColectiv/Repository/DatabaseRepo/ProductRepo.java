@@ -6,6 +6,9 @@ import ProiectColectiv.Repository.Utils.Filter;
 import ProiectColectiv.Repository.Utils.JdbcUtils;
 import javax0.levenshtein.Levenshtein;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,15 +30,7 @@ public class ProductRepo implements IProductRepo {
         try (PreparedStatement preStmt=con.prepareStatement("select * from Products where id=?")){
             preStmt.setInt(1,integer);
             try (ResultSet rs=preStmt.executeQuery()){
-                Integer id = rs.getInt("id");
-                String name = rs.getString("name");
-                String description = rs.getString("description");
-                Float price = rs.getFloat("price");
-                Integer nrItems = rs.getInt("nrItems");
-                Integer nrSold = rs.getInt("nrSold");
-                Product product = new Product(name,description,price,nrItems,nrSold);
-                product.setId(id);
-                return product;
+                return mapProductFromDB(rs);
             }
         }
         catch (SQLException e) {
@@ -81,6 +76,11 @@ public class ProductRepo implements IProductRepo {
             ps.setInt(4,entity.getQuantity());
             ps.setInt(5,entity.getNrSold());
             ps.executeUpdate();
+            try(FileOutputStream fos = new FileOutputStream("Images/" + entity.getName() + ".png")){
+                fos.write(entity.getFileData());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         } catch (SQLException e) {
             System.err.println(e.getMessage());
         }
@@ -94,15 +94,7 @@ public class ProductRepo implements IProductRepo {
             ps.setInt(1,nr);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Product product = new Product(
-                            rs.getString("name"),
-                            rs.getString("description"),
-                            rs.getFloat("price"),
-                            rs.getInt("nrItems"),
-                            rs.getInt("nrSold")
-                    );
-                    product.setId(rs.getInt("id"));
-                    products.add(product);
+                    products.add(mapProductFromDB(rs));
                 }
             }
         } catch (SQLException e) {
@@ -138,14 +130,7 @@ public class ProductRepo implements IProductRepo {
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Product product = new Product(
-                            rs.getString("name"),
-                            rs.getString("description"),
-                            rs.getFloat("price"),
-                            rs.getInt("nrItems"),
-                            rs.getInt("nrSold")
-                    );
-                    product.setId(rs.getInt("id"));
+                    Product product = mapProductFromDB(rs);
                     int matches = 0;
                     searchInput = searchInput == null ? "" : searchInput.strip().replaceAll("\\s+"," ").toLowerCase();
                     if (searchInput.isEmpty()) {
@@ -170,5 +155,24 @@ public class ProductRepo implements IProductRepo {
             System.err.println(e.getMessage());
         }
         return products;
+    }
+
+    private Product mapProductFromDB(ResultSet rs) throws SQLException {
+        Product product = new Product(
+                rs.getString("name"),
+                rs.getString("description"),
+                rs.getFloat("price"),
+                rs.getInt("nrItems"),
+                rs.getInt("nrSold")
+        );
+        byte[] fileData;
+        try (FileInputStream fis = new FileInputStream("Images/" + product.getName() + ".png")) {
+            fileData = fis.readAllBytes();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        product.setFileData(fileData);
+        product.setId(rs.getInt("id"));
+        return product;
     }
 }
