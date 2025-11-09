@@ -110,7 +110,7 @@ public class CartItemRepo implements ICartItemRepo {
                     Integer productID = rs.getInt("productID");
                     Integer nrOrdered = rs.getInt("nrOrdered");
 
-                    // Creăm obiectul și îl adăugăm în listă
+                    // creez obiectul și îl adăugăm în lista
                     items.add(new CartItem(currentUserID, productID, nrOrdered));
                 }
             }

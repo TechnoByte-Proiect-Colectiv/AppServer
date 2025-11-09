@@ -1,5 +1,6 @@
 package ProiectColectiv.Repository.DatabaseRepo;
 
+import ProiectColectiv.Domain.CartItem;
 import ProiectColectiv.Domain.CompositeKey;
 import ProiectColectiv.Domain.Order;
 import ProiectColectiv.Repository.Interfaces.IOrderRepo;
@@ -9,6 +10,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 public class OrderRepo implements IOrderRepo {
@@ -95,5 +98,34 @@ public class OrderRepo implements IOrderRepo {
         } catch (SQLException e) {
             System.err.println("Error DB " + e.getMessage());
         }
+    }
+
+    @Override
+    public Iterable<Order> findAllForUser(String userID) {
+        List<Order> items = new ArrayList<>(); // lista goala
+        Connection con = dbUtils.getConnection();
+
+        // caut TOATE intrările pentru un userID
+        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM CartItem WHERE userID = ?")) {
+
+            ps.setString(1, userID); // setez parametrul userID
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    // datele pentru rândul curent
+                    String currentUserID = rs.getString("userID");
+                    Integer productID = rs.getInt("productID");
+                    Integer quantity = rs.getInt("quantity");
+                    String deliveryStatus = rs.getString("deliveryStatus");
+
+                    // creez obiectul și îl adăugăm în listă
+                    items.add(new Order(currentUserID, productID, quantity, deliveryStatus));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error DB " + e);
+        }
+
+        return items;
     }
 }
