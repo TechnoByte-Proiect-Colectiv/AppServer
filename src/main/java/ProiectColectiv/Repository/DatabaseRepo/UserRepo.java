@@ -24,16 +24,18 @@ public class UserRepo implements IUserRepo {
         try (PreparedStatement preStmt=con.prepareStatement("select * from Products where id=?")){
             preStmt.setString(1,s);
             try(ResultSet rs=preStmt.executeQuery()){
-                String id = rs.getString("id");
-                String password = rs.getString("password");
-                Boolean isAdmin = rs.getBoolean("isAdmin");
-                String authToken = rs.getString("authToken");
-                LocalDateTime lastLogin = rs.getTimestamp("lastLogin").toLocalDateTime();
-                String adress = rs.getString("adress");
-                LocalDate dateCreated = rs.getDate("dateCreated").toLocalDate();
-                User user = new User(password,isAdmin,authToken,lastLogin,adress,dateCreated);
-                user.setId(id);
-                return user;
+                if (rs.next()) {
+                    String id = rs.getString("id");
+                    String password = rs.getString("password");
+                    Boolean isAdmin = rs.getBoolean("isAdmin");
+                    String authToken = rs.getString("authToken");
+                    LocalDateTime lastLogin = rs.getTimestamp("lastLogin").toLocalDateTime();
+                    String adress = rs.getString("adress");
+                    LocalDate dateCreated = rs.getDate("dateCreated").toLocalDate();
+                    User user = new User(password, isAdmin, authToken, lastLogin, adress, dateCreated);
+                    user.setId(id);
+                    return user;
+                }
             }
         }
         catch (SQLException e){
