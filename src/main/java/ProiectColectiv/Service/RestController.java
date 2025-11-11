@@ -22,7 +22,7 @@ public class RestController {
     private IProductRepo productRepo;
 
     @GetMapping("/product/{id}")
-    public ResponseEntity<?> getById(@PathVariable Integer id) {
+    public ResponseEntity<?> getProductById(@PathVariable Integer id) {
         Product p = productRepo.findById(id);
         if(p == null) {
             return new ResponseEntity<>("Product not found", HttpStatus.NOT_FOUND);
@@ -31,19 +31,19 @@ public class RestController {
     }
 
     @PostMapping("/product")
-    public Product create(@RequestBody Product product) {
+    public Product createProduct(@RequestBody Product product) {
         productRepo.save(product);
         return product;
     }
 
     @DeleteMapping("/product/{id}")
-    public ResponseEntity<?> delete(@PathVariable Integer id) {
+    public ResponseEntity<?> deleteProduct(@PathVariable Integer id) {
         productRepo.delete(id);
         return new ResponseEntity<>("Product deleted", HttpStatus.NO_CONTENT);
     }
 
     @GetMapping("/product/most-sold")
-    public Iterable<Product> getMostSold(@RequestParam int nr) {
+    public Iterable<Product> getMostSoldProducts(@RequestParam int nr) {
         return productRepo.getMostSoldProducts(nr);
     }
 
@@ -55,7 +55,7 @@ public class RestController {
         return productRepo.filteredSearch(filter, search);
     }
 
-    @PostMapping("/user/login")
+    @GetMapping("/user/login")
     public ResponseEntity<?> login(@RequestBody User user) {
         User repoUser = userRepo.findById(user.getId());
         if (BCrypt.verifyer().verify(user.getPassword().toCharArray(), repoUser.getPassword()).verified){
