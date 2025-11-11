@@ -30,7 +30,8 @@ public class ProductRepo implements IProductRepo {
         try (PreparedStatement preStmt=con.prepareStatement("select * from Products where id=?")){
             preStmt.setInt(1,integer);
             try (ResultSet rs=preStmt.executeQuery()){
-                return mapProductFromDB(rs);
+                if(rs.next())
+                    return mapProductFromDB(rs);
             }
         }
         catch (SQLException e) {
@@ -58,7 +59,7 @@ public class ProductRepo implements IProductRepo {
     @Override
     public void delete(Integer id) {
         Connection con = dbUtils.getConnection();
-        try (PreparedStatement ps = con.prepareStatement("DELETE * FROM Products WHERE id=?")) {
+        try (PreparedStatement ps = con.prepareStatement("DELETE FROM Products WHERE id=?")) {
             ps.setInt(1,id);
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -107,16 +108,16 @@ public class ProductRepo implements IProductRepo {
     public Iterable<Product> filteredSearch(Filter filter,String searchInput) {
 
         StringBuilder condition = new StringBuilder();
-        List<Integer> params = new ArrayList<>();
+        List<Float> params = new ArrayList<>();
         if(filter!=null) {
             condition = new StringBuilder(" WHERE 1=1");
-            if(filter.isFilterInStock())
+            if(filter.isFilterInStock() != null && filter.isFilterInStock())
                 condition.append(" AND nrItems > 0");
-            if(filter.isFilterPriceLower()) {
+            if(filter.getPriceLower() != null) {
                 condition.append(" AND price < ?");
                 params.add(filter.getPriceLower());
             }
-            if(filter.isFilterPriceHigher()) {
+            if(filter.getPriceHigher() != null) {
                 condition.append(" AND price > ?");
                 params.add(filter.getPriceHigher());
             }
@@ -126,7 +127,7 @@ public class ProductRepo implements IProductRepo {
         Connection con = dbUtils.getConnection();
         try (PreparedStatement ps = con.prepareStatement("SELECT * FROM Products" + condition)) {
             for (int i = 0; i < params.size(); i++) {
-                ps.setInt(i+1, params.get(i));
+                ps.setFloat(i+1, params.get(i));
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {

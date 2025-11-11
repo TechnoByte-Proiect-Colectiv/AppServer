@@ -1,43 +1,33 @@
 package ProiectColectiv.Repository.Utils;
 
 public class Filter {
-    private boolean filterPriceLower;
-    private boolean filterPriceHigher;
-    private int priceLower;
-    private int priceHigher;
-    private boolean filterInStock;
-
-    public void setFilterPriceLower(int price) {
-        this.priceLower = price;
-        filterPriceLower = true;
-    }
-
-    public void setFilterPriceHigher(int price) {
-        this.priceHigher = price;
-        filterPriceHigher = true;
-    }
+    private Float priceLower;
+    private Float priceHigher;
+    private Boolean filterInStock;
 
     public void setFilterInStock() {
         this.filterInStock = true;
     }
 
-    public boolean isFilterPriceLower() {
-        return filterPriceLower;
+    public void setPriceLower(float priceLower) {
+        this.priceLower = priceLower;
     }
 
-    public boolean isFilterPriceHigher() {
-        return filterPriceHigher;
+    public void setPriceHigher(float priceHigher) {
+        this.priceHigher = priceHigher;
     }
 
-    public boolean isFilterInStock() {
+    public Boolean isFilterInStock() {
         return filterInStock;
     }
 
-    public int getPriceLower() {
+    public Float getPriceLower() {
         return priceLower;
     }
 
-    public int getPriceHigher() {
+    public Float getPriceHigher() {
         return priceHigher;
     }
+
+    public Filter(){}
 }

@@ -73,4 +73,6 @@ public class Product extends Entity<Integer>
         this.quantity = quantity;
         this.nrSold = nrSold;
     }
+
+    public Product(){}
 }
