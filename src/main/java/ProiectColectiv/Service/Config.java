@@ -1,0 +1,35 @@
+package ProiectColectiv.Service;
+
+import ProiectColectiv.Repository.DatabaseRepo.ProductRepo;
+import ProiectColectiv.Repository.DatabaseRepo.UserRepo;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Properties;
+
+@Configuration
+public class Config {
+    @Bean
+    Properties getProps() {
+        Properties props = new Properties();
+        try {
+            props.load(new FileReader("bd.config"));
+        }
+        catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+        return props;
+    }
+
+    @Bean
+    UserRepo userRepo() {
+        return new UserRepo(getProps());
+    }
+
+    @Bean
+    ProductRepo productRepo() {
+        return new ProductRepo(getProps());
+    }
+}

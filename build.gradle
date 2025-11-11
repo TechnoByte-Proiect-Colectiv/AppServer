@@ -15,7 +15,6 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
@@ -24,6 +23,12 @@ dependencies {
 
     // https://mvnrepository.com/artifact/com.javax0/levenshtein
     implementation("com.javax0:levenshtein:1.0.0")
+
+    // https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc
+    implementation 'org.xerial:sqlite-jdbc:3.49.1.0'
+
+    // https://mvnrepository.com/artifact/at.favre.lib/bcrypt
+    implementation("at.favre.lib:bcrypt:0.10.2")
 }
 
 test {

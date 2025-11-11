@@ -1,13 +1,13 @@
 package ProiectColectiv.Domain;
-import com.google.gson.Gson;
 
 public class Product extends Entity<Integer>
 {
     private String name;
     private String description;
-    private Integer price;
+    private Float price;
     private Integer quantity;
     private Integer nrSold;
+    private byte[] fileData;
     /// private Integer idSeller;
     public String getName() {
         return name;
@@ -25,11 +25,11 @@ public class Product extends Entity<Integer>
         this.description = description;
     }
 
-    public Integer getPrice() {
+    public Float getPrice() {
         return price;
     }
 
-    public void setPrice(Integer price) {
+    public void setPrice(Float price) {
         this.price = price;
     }
 
@@ -49,11 +49,30 @@ public class Product extends Entity<Integer>
         this.nrSold = nrSold;
     }
 
-    public Product(String name, String description, Integer price, Integer quantity, Integer nrSold) {
+    public byte[] getFileData() {
+        return fileData;
+    }
+
+    public void setFileData(byte[] filePath) {
+        this.fileData = filePath;
+    }
+
+    public Product(String name, String description, Float price, Integer quantity, Integer nrSold, byte[] fileData) {
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.quantity = quantity;
+        this.nrSold = nrSold;
+        this.fileData = fileData;
+    }
+
+    public Product(String name, String description, Float price, Integer quantity, Integer nrSold) {
         this.name = name;
         this.description = description;
         this.price = price;
         this.quantity = quantity;
         this.nrSold = nrSold;
     }
+
+    public Product(){}
 }

@@ -55,16 +55,16 @@ create table CartItems
 
 create table "Order"
 (
-    idProduct      varchar not null
+    idProduct      integer not null
         constraint Order_Products_id_fk
             references Products,
-    idUser         integer not null
+    idUser         varchar not null
         constraint Order_Users_email_fk
             references Users (email),
     date           date    not null,
     deliveryStatus varchar not null,
     constraint Order_pk
-        primary key (idProduct, idUser)
+        primary key (idUser, idProduct)
 );
 
 
