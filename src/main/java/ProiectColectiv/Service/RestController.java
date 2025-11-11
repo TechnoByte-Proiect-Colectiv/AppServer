@@ -1,7 +1,7 @@
 package ProiectColectiv.Service;
 
 import ProiectColectiv.Domain.Product;
-import ProiectColectiv.Repository.DatabaseRepo.ProductRepo;
+import ProiectColectiv.Domain.User;
 import ProiectColectiv.Repository.DatabaseRepo.UserRepo;
 import ProiectColectiv.Repository.Interfaces.IProductRepo;
 import ProiectColectiv.Repository.Utils.Filter;
@@ -21,7 +21,7 @@ public class RestController {
     @Autowired
     private IProductRepo productRepo;
 
-    @GetMapping("/{id}")
+    @GetMapping("/product/{id}")
     public ResponseEntity<?> getById(@PathVariable Integer id) {
         Product p = productRepo.findById(id);
         if(p == null) {
@@ -30,24 +30,24 @@ public class RestController {
         return new ResponseEntity<>(p, HttpStatus.OK);
     }
 
-    @PostMapping
+    @PostMapping("/product")
     public Product create(@RequestBody Product product) {
         productRepo.save(product);
         return product;
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/product/{id}")
     public ResponseEntity<?> delete(@PathVariable Integer id) {
         productRepo.delete(id);
         return new ResponseEntity<>("Product deleted", HttpStatus.NO_CONTENT);
     }
 
-    @GetMapping("/most-sold")
+    @GetMapping("/product/most-sold")
     public Iterable<Product> getMostSold(@RequestParam int nr) {
         return productRepo.getMostSoldProducts(nr);
     }
 
-    @PostMapping("/search")
+    @PostMapping("/product/search")
     public Iterable<Product> filteredSearch(
             @RequestParam(required = false) String search,
             @RequestBody(required = false) Filter filter) {
