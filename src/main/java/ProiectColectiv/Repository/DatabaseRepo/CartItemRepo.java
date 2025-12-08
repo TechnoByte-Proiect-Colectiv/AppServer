@@ -21,117 +21,113 @@ public class CartItemRepo implements ICartItemRepo {
     }
 
     @Override
-    public CartItem findById(CompositeKey<String,Integer> compositeKey) {
+    public CartItem findById(CompositeKey<String, Integer> compositeKey) {
         Connection con = dbUtils.getConnection();
-        try (PreparedStatement preStmt = con.prepareStatement("select * from CartItem WHERE userID = ? AND productID = ?")) {
+        String query = "SELECT * FROM CartItem WHERE idOrder = ? AND productID = ?";
 
-            /// aici este mai sus :))
-            preStmt.setString(1, compositeKey.key1()); // key1 este userID (String)
+        try (PreparedStatement preStmt = con.prepareStatement(query)) {
+            preStmt.setString(1, compositeKey.key1()); // key1 este idOrder (String)
             preStmt.setInt(2, compositeKey.key2());   // key2 este productID (Integer)
 
             try (ResultSet rs = preStmt.executeQuery()) {
                 if (rs.next()) {
-                    String userID = rs.getString("userID");
+                    String idOrder = rs.getString("idOrder");
                     Integer productID = rs.getInt("productID");
                     Integer nrOrdered = rs.getInt("nrOrdered");
 
-                    /// nu mai trebuie setID daca am facut mai sus setarea la compositeKey
-                    return new CartItem(userID, productID, nrOrdered);
+                    return new CartItem(idOrder, productID, nrOrdered);
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error DB " + e);
+            System.err.println("Error DB findById CartItem: " + e);
         }
         return null;
     }
 
     @Override
     public void save(CartItem entity) {
-            Connection conn = dbUtils.getConnection();
+        Connection conn = dbUtils.getConnection();
+        String query = "INSERT INTO CartItem (idOrder, productID, nrOrdered) VALUES (?, ?, ?)";
 
-            try (PreparedStatement ps = conn.prepareStatement("INSERT INTO CartItem (userID, productID, nrOrdered) VALUES (?, ?, ?)")) {
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, entity.getOrderID());
+            ps.setInt(2, entity.getProductID());
+            ps.setInt(3, entity.getNrOrdered());
 
-                ps.setString(1, entity.getIdUser());   // key1
-                ps.setInt(2, entity.getIdProduct());   // key2
-                ps.setInt(3, entity.getNrOrdered());
-
-                ps.executeUpdate();
-            } catch (SQLException e) {
-                System.err.println("Error DB " + e.getMessage());
-            }
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error DB save CartItem: " + e.getMessage());
+        }
     }
 
     @Override
     public void update(CartItem entity) {
         Connection conn = dbUtils.getConnection();
-        try (PreparedStatement ps = conn.prepareStatement("UPDATE CartItems SET nrOrdered = ? WHERE userID = ? AND productID = ?")) {
-            /// 1. Setează câmpurile de actualizat (non-cheie)
+        String query = "UPDATE CartItem SET nrOrdered = ? WHERE idOrder = ? AND productID = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, entity.getNrOrdered());
 
-            /// 2. Setează câmpurile cheie pentru clauza WHERE
-            ps.setString(2, entity.getIdUser()); // key1
-            ps.setInt(3, entity.getIdProduct()); // key2
+            ps.setString(2, entity.getOrderID());   // key1 -> idOrder
+            ps.setInt(3, entity.getProductID());    // key2 -> productID
 
             ps.executeUpdate();
-        }
-        catch (SQLException e) {
-            System.err.println("Error DB " + e.getMessage());
+        } catch (SQLException e) {
+            System.err.println("Error DB update CartItem: " + e.getMessage());
         }
     }
 
     @Override
     public void delete(CompositeKey<String, Integer> compositeKey) {
         Connection conn = dbUtils.getConnection();
-        try (PreparedStatement ps = conn.prepareStatement("DELETE FROM CartItem WHERE userID = ? AND productID = ?")) {
+        String query = "DELETE FROM CartItem WHERE idOrder = ? AND productID = ?";
 
-            ps.setString(1, compositeKey.key1()); // userID
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, compositeKey.key1()); // idOrder
             ps.setInt(2, compositeKey.key2());   // productID
 
             ps.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("Error DB " + e.getMessage());
+            System.err.println("Error DB delete CartItem: " + e.getMessage());
         }
     }
 
     @Override
-    public Iterable<CartItem> findAllForUser(String userID) {
-        List<CartItem> items = new ArrayList<>(); // lista goala
+    public Iterable<CartItem> findAllForUser(String idOrder) {
+        List<CartItem> items = new ArrayList<>();
         Connection con = dbUtils.getConnection();
 
-        // caut TOATE intrările pentru un userID
-        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM CartItem WHERE userID = ?")) {
+        String query = "SELECT * FROM CartItem WHERE idOrder = ?";
 
-            ps.setString(1, userID); // setez parametrul userID
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setString(1, idOrder);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    // datele pentru rândul curent
-                    String currentUserID = rs.getString("userID");
+                    String currentIdOrder = rs.getString("idOrder");
                     Integer productID = rs.getInt("productID");
                     Integer nrOrdered = rs.getInt("nrOrdered");
 
-                    // creez obiectul și îl adăugăm în lista
-                    items.add(new CartItem(currentUserID, productID, nrOrdered));
+                    items.add(new CartItem(currentIdOrder, productID, nrOrdered));
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error DB " + e);
+            System.err.println("Error DB findAllForOrder: " + e);
         }
 
         return items;
     }
 
     @Override
-    public void clearCartForUser(String userID) {
+    public void clearCartForUser(String idOrder) {
         Connection conn = dbUtils.getConnection();
+        String query = "DELETE FROM CartItem WHERE idOrder = ?";
 
-        try (PreparedStatement ps = conn.prepareStatement("DELETE FROM CartItem WHERE userID = ?")) {
-
-            ps.setString(1, userID); // setez parametrul userID
-            ps.executeUpdate(); // execut ștergerea
-
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, idOrder);
+            ps.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("Error DB " + e.getMessage());
+            System.err.println("Error DB clearCart: " + e.getMessage());
         }
     }
 }

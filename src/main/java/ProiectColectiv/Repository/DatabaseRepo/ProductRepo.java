@@ -19,23 +19,23 @@ import java.util.Properties;
 
 public class ProductRepo implements IProductRepo {
     private final JdbcUtils dbUtils;
+    private final String IMAGE_FOLDER = "Images/"; // Constanta pentru folder
 
     public ProductRepo(Properties properties) {
         dbUtils = new JdbcUtils(properties);
     }
 
     @Override
-    public Product findById(Integer integer) {
+    public Product findById(Integer id) {
         Connection con = dbUtils.getConnection();
-        try (PreparedStatement preStmt=con.prepareStatement("select * from Products where id=?")){
-            preStmt.setInt(1,integer);
-            try (ResultSet rs=preStmt.executeQuery()){
-                if(rs.next())
+        try (PreparedStatement preStmt = con.prepareStatement("SELECT * FROM Products WHERE id=?")) {
+            preStmt.setInt(1, id);
+            try (ResultSet rs = preStmt.executeQuery()) {
+                if (rs.next())
                     return mapProductFromDB(rs);
             }
-        }
-        catch (SQLException e) {
-            System.err.println("Error DB "+e);
+        } catch (SQLException e) {
+            System.err.println("Error DB findById: " + e);
         }
         return null;
     }
@@ -43,16 +43,25 @@ public class ProductRepo implements IProductRepo {
     @Override
     public void update(Product entity) {
         Connection conn = dbUtils.getConnection();
-        try (PreparedStatement ps = conn.prepareStatement("UPDATE Products SET name=?,description=?, price=?, nrItems=?, nrSold=? WHERE id=?")){
-            ps.setString(1,entity.getName());
-            ps.setString(2,entity.getDescription());
-            ps.setFloat(3,entity.getPrice());
-            ps.setInt(4,entity.getQuantity());
-            ps.setInt(5,entity.getNrSold());
-            ps.setInt(6,entity.getId());
+        String query = "UPDATE Products SET name=?, description=?, slug=?, brand=?, price=?," +
+                " nrItems=?, currency=?, image=?, nrSold=?, category=? WHERE id=?";
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, entity.getName());
+            ps.setString(2, entity.getDescription());
+            ps.setString(3, entity.getSlug());
+            ps.setString(4, entity.getBrand());
+            ps.setFloat(5, entity.getPrice());
+            ps.setInt(6, entity.getQuantity()); // nrItems in DB
+            ps.setString(7, entity.getCurrency());
+            ps.setString(8, entity.getImage());
+            ps.setInt(9, entity.getNrSold());
+            ps.setString(10, entity.getCategory());
+            ps.setInt(11, entity.getId()); // WHERE clause
+
             ps.executeUpdate();
         } catch (SQLException e) {
-            System.err.println(e.getMessage());
+            System.err.println("Error DB update: " + e.getMessage());
         }
     }
 
@@ -60,30 +69,49 @@ public class ProductRepo implements IProductRepo {
     public void delete(Integer id) {
         Connection con = dbUtils.getConnection();
         try (PreparedStatement ps = con.prepareStatement("DELETE FROM Products WHERE id=?")) {
-            ps.setInt(1,id);
+            ps.setInt(1, id);
             ps.executeUpdate();
         } catch (SQLException e) {
-            System.err.println(e.getMessage());
+            System.err.println("Error DB delete: " + e.getMessage());
         }
     }
 
     @Override
     public void save(Product entity) {
         Connection con = dbUtils.getConnection();
-        try (PreparedStatement ps = con.prepareStatement("INSERT INTO Products(name,description,price,nrItems,nrSold) values (?,?,?,?,?)")){
-            ps.setString(1,entity.getName());
-            ps.setString(2,entity.getDescription());
-            ps.setFloat(3,entity.getPrice());
-            ps.setInt(4,entity.getQuantity());
-            ps.setInt(5,entity.getNrSold());
+        String query = "INSERT INTO Products(name, description, slug, brand, price, nrItems," +
+                " currency, image, nrSold, category) VALUES (?,?,?,?,?,?,?,?,?,?)";
+
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setString(1, entity.getName());
+            ps.setString(2, entity.getDescription());
+            ps.setString(3, entity.getSlug());
+            ps.setString(4, entity.getBrand());
+            ps.setFloat(5, entity.getPrice());
+            ps.setInt(6, entity.getQuantity());
+            ps.setString(7, entity.getCurrency());
+
+            String imageName = entity.getImage();
+            if (imageName == null || imageName.isEmpty()) {
+                imageName = entity.getName() + ".png";
+                entity.setImage(imageName);
+            }
+            ps.setString(8, imageName);
+
+            ps.setInt(9, entity.getNrSold());
+            ps.setString(10, entity.getCategory());
+
             ps.executeUpdate();
-            try(FileOutputStream fos = new FileOutputStream("Images/" + entity.getName() + ".png")){
-                fos.write(entity.getFileData());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+
+            if (entity.getFileData() != null) {
+                try (FileOutputStream fos = new FileOutputStream(IMAGE_FOLDER + imageName)) {
+                    fos.write(entity.getFileData());
+                } catch (IOException e) {
+                    System.err.println("Error saving image file: " + e.getMessage());
+                }
             }
         } catch (SQLException e) {
-            System.err.println(e.getMessage());
+            System.err.println("Error DB save: " + e.getMessage());
         }
     }
 
@@ -91,33 +119,33 @@ public class ProductRepo implements IProductRepo {
     public Iterable<Product> getMostSoldProducts(int nr) {
         List<Product> products = new ArrayList<>();
         Connection con = dbUtils.getConnection();
-        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM Products ORDER BY nrSold DESC LIMIT ?")){
-            ps.setInt(1,nr);
+        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM Products ORDER BY nrSold DESC LIMIT ?")) {
+            ps.setInt(1, nr);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     products.add(mapProductFromDB(rs));
                 }
             }
         } catch (SQLException e) {
-            System.err.println(e.getMessage());
+            System.err.println("Error DB getMostSold: " + e.getMessage());
         }
         return products;
     }
 
     @Override
-    public Iterable<Product> filteredSearch(Filter filter,String searchInput) {
-
+    public Iterable<Product> filteredSearch(Filter filter, String searchInput) {
         StringBuilder condition = new StringBuilder();
         List<Float> params = new ArrayList<>();
-        if(filter!=null) {
+
+        if (filter != null) {
             condition = new StringBuilder(" WHERE 1=1");
-            if(filter.isFilterInStock() != null && filter.isFilterInStock())
+            if (filter.isFilterInStock() != null && filter.isFilterInStock())
                 condition.append(" AND nrItems > 0");
-            if(filter.getPriceLower() != null) {
+            if (filter.getPriceLower() != null) {
                 condition.append(" AND price < ?");
                 params.add(filter.getPriceLower());
             }
-            if(filter.getPriceHigher() != null) {
+            if (filter.getPriceHigher() != null) {
                 condition.append(" AND price > ?");
                 params.add(filter.getPriceHigher());
             }
@@ -125,21 +153,27 @@ public class ProductRepo implements IProductRepo {
 
         List<Product> products = new ArrayList<>();
         Connection con = dbUtils.getConnection();
+
         try (PreparedStatement ps = con.prepareStatement("SELECT * FROM Products" + condition)) {
             for (int i = 0; i < params.size(); i++) {
-                ps.setFloat(i+1, params.get(i));
+                ps.setFloat(i + 1, params.get(i));
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Product product = mapProductFromDB(rs);
+
                     int matches = 0;
-                    searchInput = searchInput == null ? "" : searchInput.strip().replaceAll("\\s+"," ").toLowerCase();
-                    if (searchInput.isEmpty()) {
+                    String processedInput = (searchInput == null) ? "" : searchInput.strip().replaceAll("\\s+", " ").toLowerCase();
+
+                    if (processedInput.isEmpty()) {
                         products.add(product);
                         continue;
                     }
-                    String[] inputWords = searchInput.split(" ");
-                    String[] nameWords = product.getName().strip().replaceAll("\\s+"," ").toLowerCase().split(" ");
+
+                    String[] inputWords = processedInput.split(" ");
+                    String[] nameWords = product.getName().strip().replaceAll("\\s+",
+                            " ").toLowerCase().split(" ");
+
                     for (String inputWord : inputWords) {
                         for (String nameWord : nameWords) {
                             if (Levenshtein.distance(inputWord, nameWord) < 3) {
@@ -153,27 +187,36 @@ public class ProductRepo implements IProductRepo {
                 }
             }
         } catch (SQLException e) {
-            System.err.println(e.getMessage());
+            System.err.println("Error DB filteredSearch: " + e.getMessage());
         }
         return products;
     }
 
     private Product mapProductFromDB(ResultSet rs) throws SQLException {
-        Product product = new Product(
-                rs.getString("name"),
-                rs.getString("description"),
-                rs.getFloat("price"),
-                rs.getInt("nrItems"),
-                rs.getInt("nrSold")
-        );
-        byte[] fileData;
-        try (FileInputStream fis = new FileInputStream("Images/" + product.getName() + ".png")) {
-            fileData = fis.readAllBytes();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        Integer id = rs.getInt("id");
+        String name = rs.getString("name");
+        String description = rs.getString("description");
+        String slug = rs.getString("slug");
+        String brand = rs.getString("brand");
+        Float price = rs.getFloat("price");
+        Integer quantity = rs.getInt("nrItems"); // Mapat la nrItems in DB
+        String currency = rs.getString("currency");
+        String image = rs.getString("image");
+        Integer nrSold = rs.getInt("nrSold");
+        String category = rs.getString("category");
+
+        byte[] fileData = null;
+        if (image != null && !image.isEmpty()) {
+            try (FileInputStream fis = new FileInputStream(IMAGE_FOLDER + image)) {
+                fileData = fis.readAllBytes();
+            } catch (IOException e) {
+                System.err.println("Warning: Image not found for product " + name);
+            }
         }
-        product.setFileData(fileData);
-        product.setId(rs.getInt("id"));
+
+        Product product = new Product(name, description, slug, brand, price, quantity, currency, image, nrSold, category, fileData);
+        product.setId(id);
+
         return product;
     }
 }
