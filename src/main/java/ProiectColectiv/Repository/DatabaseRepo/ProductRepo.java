@@ -52,14 +52,26 @@ public class ProductRepo implements IProductRepo {
             ps.setString(3, entity.getSlug());
             ps.setString(4, entity.getBrand());
             ps.setFloat(5, entity.getPrice());
-            ps.setInt(6, entity.getQuantity()); // nrItems in DB
+            ps.setInt(6, entity.getQuantity());
             ps.setString(7, entity.getCurrency());
-            ps.setString(8, entity.getImage());
+
+            String imageName = entity.getName() + ".png";
+            ps.setString(8, imageName);
+
             ps.setInt(9, entity.getNrSold());
             ps.setString(10, entity.getCategory());
-            ps.setInt(11, entity.getId()); // WHERE clause
+            ps.setInt(11, entity.getId());
 
             ps.executeUpdate();
+
+            if (entity.getFileData() != null) {
+                try (FileOutputStream fos = new FileOutputStream(IMAGE_FOLDER + imageName)) {
+                    fos.write(entity.getFileData());
+                } catch (IOException e) {
+                    System.err.println("Error updating image file: " + e.getMessage());
+                }
+            }
+
         } catch (SQLException e) {
             System.err.println("Error DB update: " + e.getMessage());
         }
@@ -91,11 +103,7 @@ public class ProductRepo implements IProductRepo {
             ps.setInt(6, entity.getQuantity());
             ps.setString(7, entity.getCurrency());
 
-            String imageName = entity.getImage();
-            if (imageName == null || imageName.isEmpty()) {
-                imageName = entity.getName() + ".png";
-                entity.setImage(imageName);
-            }
+            String imageName = entity.getName() + ".png";
             ps.setString(8, imageName);
 
             ps.setInt(9, entity.getNrSold());
@@ -199,22 +207,24 @@ public class ProductRepo implements IProductRepo {
         String slug = rs.getString("slug");
         String brand = rs.getString("brand");
         Float price = rs.getFloat("price");
-        Integer quantity = rs.getInt("nrItems"); // Mapat la nrItems in DB
+        Integer quantity = rs.getInt("nrItems");
         String currency = rs.getString("currency");
-        String image = rs.getString("image");
+
+        String imageName = rs.getString("image");
+
         Integer nrSold = rs.getInt("nrSold");
         String category = rs.getString("category");
 
         byte[] fileData = null;
-        if (image != null && !image.isEmpty()) {
-            try (FileInputStream fis = new FileInputStream(IMAGE_FOLDER + image)) {
+        if (imageName != null && !imageName.isEmpty()) {
+            try (FileInputStream fis = new FileInputStream(IMAGE_FOLDER + imageName)) {
                 fileData = fis.readAllBytes();
             } catch (IOException e) {
                 System.err.println("Warning: Image not found for product " + name);
             }
         }
 
-        Product product = new Product(name, description, slug, brand, price, quantity, currency, image, nrSold, category, fileData);
+        Product product = new Product(name, description, slug, brand, price, quantity, currency, nrSold, category, fileData);
         product.setId(id);
 
         return product;

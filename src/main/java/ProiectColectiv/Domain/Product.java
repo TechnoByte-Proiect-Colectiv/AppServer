@@ -8,14 +8,12 @@ public class Product extends Entity<Integer> {
     private Float price;
     private Integer quantity; // stock
     private String currency;
-    private String image;     // path sau url
     private Integer nrSold;
     private String category;  // type
     private byte[] fileData;
-    // private Integer idSeller;
 
     public Product(String name, String description, String slug, String brand, Float price,
-                   Integer quantity, String currency, String image, Integer nrSold,
+                   Integer quantity, String currency, Integer nrSold,
                    String category, byte[] fileData) {
         this.name = name;
         this.description = description;
@@ -24,7 +22,6 @@ public class Product extends Entity<Integer> {
         this.price = price;
         this.quantity = quantity;
         this.currency = currency;
-        this.image = image;
         this.nrSold = nrSold;
         this.category = category;
         this.fileData = fileData;
@@ -97,13 +94,7 @@ public class Product extends Entity<Integer> {
         this.currency = currency;
     }
 
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
-    }
+    // Am scos getImage() si setImage()
 
     public Integer getNrSold() {
         return nrSold;
