@@ -20,14 +20,13 @@ public class UserRepo implements IUserRepo {
     @Override
     public User findById(String id) {
         Connection con = dbUtils.getConnection();
-        String query = "SELECT * FROM Users WHERE id=?";
+        String query = "SELECT * FROM Users WHERE email=?";
 
         try (PreparedStatement preStmt = con.prepareStatement(query)) {
             preStmt.setString(1, id);
 
             try (ResultSet rs = preStmt.executeQuery()) {
                 if (rs.next()) {
-                    String extractedId = rs.getString("id");
                     String firstName = rs.getString("firstName");
                     String lastName = rs.getString("lastName");
                     String email = rs.getString("email");
@@ -43,7 +42,6 @@ public class UserRepo implements IUserRepo {
                     LocalDate dateCreated = (sqlDateCreated != null) ? sqlDateCreated.toLocalDate() : null;
 
                     User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated);
-                    user.setId(extractedId);
                     return user;
                 }
             }
@@ -56,10 +54,9 @@ public class UserRepo implements IUserRepo {
     @Override
     public void save(User entity) {
         Connection con = dbUtils.getConnection();
-        String query = "INSERT INTO Users(id, firstName, lastName, email, password, isAdmin, authToken, lastLogin, address, dateCreated) VALUES (?,?,?,?,?,?,?,?,?,?)";
+        String query = "INSERT INTO Users(firstName, lastName, email, password, isAdmin, authToken, lastLogin, address, dateCreated) VALUES (?,?,?,?,?,?,?,?,?)";
 
         try (PreparedStatement ps = con.prepareStatement(query)) {
-            ps.setString(1, entity.getId());
             ps.setString(2, entity.getFirstName());
             ps.setString(3, entity.getLastName());
             ps.setString(4, entity.getEmail());
@@ -80,19 +77,18 @@ public class UserRepo implements IUserRepo {
     @Override
     public void update(User entity) {
         Connection con = dbUtils.getConnection();
-        String query = "UPDATE Users SET firstName=?, lastName=?, email=?, password=?, isAdmin=?, authToken=?, lastLogin=?, address=?, dateCreated=? WHERE id=?";
+        String query = "UPDATE Users SET firstName=?, lastName=?, password=?, isAdmin=?, authToken=?, lastLogin=?, address=?, dateCreated=? WHERE email=?";
 
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, entity.getFirstName());
             ps.setString(2, entity.getLastName());
-            ps.setString(3, entity.getEmail());
-            ps.setString(4, entity.getPassword());
-            ps.setBoolean(5, entity.isAdmin());
-            ps.setString(6, entity.getAuthToken());
-            ps.setObject(7, entity.getLastLogin());
-            ps.setString(8, entity.getAddress());
-            ps.setObject(9, entity.getDateCreated());
-            ps.setString(10, entity.getId());
+            ps.setString(3, entity.getPassword());
+            ps.setBoolean(4, entity.isAdmin());
+            ps.setString(5, entity.getAuthToken());
+            ps.setObject(6, entity.getLastLogin());
+            ps.setString(7, entity.getAddress());
+            ps.setObject(8, entity.getDateCreated());
+            ps.setString(9, entity.getEmail());
 
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -103,7 +99,7 @@ public class UserRepo implements IUserRepo {
     @Override
     public void delete(String id) {
         Connection con = dbUtils.getConnection();
-        String query = "DELETE FROM Users WHERE id=?";
+        String query = "DELETE FROM Users WHERE email=?";
 
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, id);
@@ -121,7 +117,6 @@ public class UserRepo implements IUserRepo {
         try (PreparedStatement preStmt = con.prepareStatement(query)) {
             try (ResultSet rs = preStmt.executeQuery()) {
                 while (rs.next()) {
-                    String extractedId = rs.getString("id");
                     String firstName = rs.getString("firstName");
                     String lastName = rs.getString("lastName");
                     String email = rs.getString("email");
@@ -137,7 +132,6 @@ public class UserRepo implements IUserRepo {
                     LocalDate dateCreated = (sqlDateCreated != null) ? sqlDateCreated.toLocalDate() : null;
 
                     User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated);
-                    user.setId(extractedId);
                     users.add(user);
                 }
                 return users;
