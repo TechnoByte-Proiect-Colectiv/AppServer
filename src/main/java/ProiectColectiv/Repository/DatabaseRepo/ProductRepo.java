@@ -6,6 +6,7 @@ import ProiectColectiv.Repository.Utils.Filter;
 import ProiectColectiv.Repository.Utils.JdbcUtils;
 import javax0.levenshtein.Levenshtein;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -54,10 +55,6 @@ public class ProductRepo implements IProductRepo {
             ps.setFloat(5, entity.getPrice());
             ps.setInt(6, entity.getQuantity());
             ps.setString(7, entity.getCurrency());
-
-            String imageName = entity.getName() + ".png";
-            ps.setString(8, imageName);
-
             ps.setInt(9, entity.getNrSold());
             ps.setString(10, entity.getCategory());
             ps.setInt(11, entity.getId());
@@ -65,7 +62,7 @@ public class ProductRepo implements IProductRepo {
             ps.executeUpdate();
 
             if (entity.getFileData() != null) {
-                try (FileOutputStream fos = new FileOutputStream(IMAGE_FOLDER + imageName)) {
+                try (FileOutputStream fos = new FileOutputStream(IMAGE_FOLDER + entity.getId() + ".png")) {
                     fos.write(entity.getFileData());
                 } catch (IOException e) {
                     System.err.println("Error updating image file: " + e.getMessage());
@@ -82,6 +79,8 @@ public class ProductRepo implements IProductRepo {
         Connection con = dbUtils.getConnection();
         try (PreparedStatement ps = con.prepareStatement("DELETE FROM Products WHERE id=?")) {
             ps.setInt(1, id);
+            File file = new File(IMAGE_FOLDER + id + ".png");
+            file.delete();
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Error DB delete: " + e.getMessage());
@@ -103,19 +102,23 @@ public class ProductRepo implements IProductRepo {
             ps.setInt(6, entity.getQuantity());
             ps.setString(7, entity.getCurrency());
 
-            String imageName = entity.getName() + ".png";
-            ps.setString(8, imageName);
-
             ps.setInt(9, entity.getNrSold());
             ps.setString(10, entity.getCategory());
 
             ps.executeUpdate();
 
-            if (entity.getFileData() != null) {
-                try (FileOutputStream fos = new FileOutputStream(IMAGE_FOLDER + imageName)) {
-                    fos.write(entity.getFileData());
-                } catch (IOException e) {
-                    System.err.println("Error saving image file: " + e.getMessage());
+            String queryId = "SELECT last_insert_rowid()";
+            try (PreparedStatement ps2 = con.prepareStatement(queryId)) {
+                ResultSet rs = ps2.executeQuery();
+                if (rs.next()) {
+                    int id = rs.getInt(1);
+                    if (entity.getFileData() != null) {
+                        try (FileOutputStream fos = new FileOutputStream(IMAGE_FOLDER + id)) {
+                            fos.write(entity.getFileData());
+                        } catch (IOException e) {
+                            System.err.println("Error saving image file: " + e.getMessage());
+                        }
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -200,6 +203,23 @@ public class ProductRepo implements IProductRepo {
         return products;
     }
 
+    @Override
+    public Iterable<Product> getAllProducts() {
+        ArrayList<Product> products = new ArrayList<>();
+        Connection con = dbUtils.getConnection();
+        try (PreparedStatement preStmt = con.prepareStatement("SELECT * FROM Products")) {
+            try (ResultSet rs = preStmt.executeQuery()) {
+                while (rs.next()) {
+                    products.add(mapProductFromDB(rs));
+                }
+                return products;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error DB findById: " + e);
+        }
+        return null;
+    }
+
     private Product mapProductFromDB(ResultSet rs) throws SQLException {
         Integer id = rs.getInt("id");
         String name = rs.getString("name");
@@ -210,19 +230,15 @@ public class ProductRepo implements IProductRepo {
         Integer quantity = rs.getInt("nrItems");
         String currency = rs.getString("currency");
 
-        String imageName = rs.getString("image");
-
         Integer nrSold = rs.getInt("nrSold");
         String category = rs.getString("category");
 
         byte[] fileData = null;
-        if (imageName != null && !imageName.isEmpty()) {
-            try (FileInputStream fis = new FileInputStream(IMAGE_FOLDER + imageName)) {
+            try (FileInputStream fis = new FileInputStream(IMAGE_FOLDER + id + ".png")) {
                 fileData = fis.readAllBytes();
             } catch (IOException e) {
                 System.err.println("Warning: Image not found for product " + name);
             }
-        }
 
         Product product = new Product(name, description, slug, brand, price, quantity, currency, nrSold, category, fileData);
         product.setId(id);

@@ -7,6 +7,7 @@ import ProiectColectiv.Repository.Utils.JdbcUtils;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Properties;
 
 public class UserRepo implements IUserRepo {
@@ -110,5 +111,40 @@ public class UserRepo implements IUserRepo {
         } catch (SQLException e) {
             System.err.println("Error DB delete: " + e.getMessage());
         }
+    }
+
+    @Override
+    public Iterable<User> getAllUsers() {
+        Connection con = dbUtils.getConnection();
+        String query = "SELECT * FROM Users";
+        ArrayList<User> users = new ArrayList<>();
+        try (PreparedStatement preStmt = con.prepareStatement(query)) {
+            try (ResultSet rs = preStmt.executeQuery()) {
+                while (rs.next()) {
+                    String extractedId = rs.getString("id");
+                    String firstName = rs.getString("firstName");
+                    String lastName = rs.getString("lastName");
+                    String email = rs.getString("email");
+                    String password = rs.getString("password");
+                    boolean isAdmin = rs.getBoolean("isAdmin");
+                    String authToken = rs.getString("authToken");
+                    String adress = rs.getString("address");
+
+                    Timestamp timestampLogin = rs.getTimestamp("lastLogin");
+                    LocalDateTime lastLogin = (timestampLogin != null) ? timestampLogin.toLocalDateTime() : null;
+
+                    Date sqlDateCreated = rs.getDate("dateCreated");
+                    LocalDate dateCreated = (sqlDateCreated != null) ? sqlDateCreated.toLocalDate() : null;
+
+                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated);
+                    user.setId(extractedId);
+                    users.add(user);
+                }
+                return users;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error DB findById: " + e);
+        }
+        return null;
     }
 }

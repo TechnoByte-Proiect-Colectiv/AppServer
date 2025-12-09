@@ -19,13 +19,12 @@ public class OrderRepo implements IOrderRepo {
     }
 
     @Override
-    public Order findById(CompositeKey<String, Integer> compositeKey) {
+    public Order findById(String userId) {
         Connection con = dbUtils.getConnection();
-        String query = "SELECT * FROM Orders WHERE userID = ? AND productID = ?";
+        String query = "SELECT * FROM Orders WHERE userID = ?";
 
         try (PreparedStatement preStmt = con.prepareStatement(query)) {
-            preStmt.setString(1, compositeKey.key1()); // userID
-            preStmt.setInt(2, compositeKey.key2());   // productID
+            preStmt.setString(1, userId); // userID
 
             try (ResultSet rs = preStmt.executeQuery()) {
                 if (rs.next()) {
@@ -41,11 +40,10 @@ public class OrderRepo implements IOrderRepo {
     @Override
     public void save(Order entity) {
         Connection conn = dbUtils.getConnection();
-        String query = "INSERT INTO Orders (userID, productID, quantity, orderDate, totalProducts, totalShipping, totalPrice, paymentMethod, paymentStatus, deliveryStatus, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO Orders (userID, quantity, orderDate, totalProducts, totalShipping, totalPrice, paymentMethod, paymentStatus, deliveryStatus, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, entity.getUserID());
-            ps.setInt(2, entity.getProductID());
             ps.setInt(3, entity.getQuantity());
             ps.setObject(4, entity.getOrderDate());
             ps.setFloat(5, entity.getTotalProducts());
@@ -65,7 +63,7 @@ public class OrderRepo implements IOrderRepo {
     @Override
     public void update(Order entity) {
         Connection conn = dbUtils.getConnection();
-        String query = "UPDATE Orders SET quantity=?, orderDate=?, totalProducts=?, totalShipping=?, totalPrice=?, paymentMethod=?, paymentStatus=?, deliveryStatus=?, address=? WHERE userID=? AND productID=?";
+        String query = "UPDATE Orders SET quantity=?, orderDate=?, totalProducts=?, totalShipping=?, totalPrice=?, paymentMethod=?, paymentStatus=?, deliveryStatus=?, address=? WHERE userID=?";
 
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, entity.getQuantity());
@@ -78,7 +76,6 @@ public class OrderRepo implements IOrderRepo {
             ps.setString(8, entity.getDeliveryStatus());
             ps.setString(9, entity.getAddress());
             ps.setString(10, entity.getUserID());
-            ps.setInt(11, entity.getProductID());
 
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -87,13 +84,12 @@ public class OrderRepo implements IOrderRepo {
     }
 
     @Override
-    public void delete(CompositeKey<String, Integer> compositeKey) {
+    public void delete(String userId) {
         Connection conn = dbUtils.getConnection();
-        String query = "DELETE FROM Orders WHERE userID = ? AND productID = ?";
+        String query = "DELETE FROM Orders WHERE userID = ?";
 
         try (PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, compositeKey.key1());
-            ps.setInt(2, compositeKey.key2());
+            ps.setString(1, userId);
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Error DB delete Order: " + e.getMessage());
@@ -124,19 +120,18 @@ public class OrderRepo implements IOrderRepo {
 
     private Order extractOrderFromResultSet(ResultSet rs) throws SQLException {
         String userID = rs.getString("userID");
-        Integer productID = rs.getInt("productID");
         Integer quantity = rs.getInt("quantity");
         Date sqlDate = rs.getDate("orderDate");
         LocalDate orderDate = (sqlDate != null) ? sqlDate.toLocalDate() : null;
 
-        Float totalProducts = rs.getFloat("totalProducts");
-        Float totalShipping = rs.getFloat("totalShipping");
+        Float totalProducts = rs.getInt("totalProducts");
+        Float totalShipping = rs.getInt("totalShipping");
         Float totalPrice = rs.getFloat("totalPrice");
         String paymentMethod = rs.getString("paymentMethod");
         Boolean paymentStatus = rs.getBoolean("paymentStatus");
         String deliveryStatus = rs.getString("deliveryStatus");
         String address = rs.getString("address");
 
-        return new Order(userID, productID, quantity, orderDate, totalProducts, totalShipping, totalPrice, paymentMethod, paymentStatus, deliveryStatus, address);
+        return new Order(userID, quantity, orderDate, totalProducts, totalShipping, totalPrice, paymentMethod, paymentStatus, deliveryStatus, address);
     }
 }

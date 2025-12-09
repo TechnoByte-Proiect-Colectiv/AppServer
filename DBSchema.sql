@@ -1,19 +1,23 @@
 create table Products
 (
-    id          integer not null
+    id          INTEGER not null
         constraint Products_pk
             primary key autoincrement,
     name        varchar not null,
     description varchar,
     price       float,
-    nrItems     integer not null,
-    nrSold      varchar not null,
+    nrItems     INTEGER not null,
+    nrSold      integer not null,
+    slug        varchar,
+    brand       varchar,
+    currency    varchar,
+    category    varchar,
     constraint check_nrItems
-        check (Products.nrItems >= 0),
-    constraint check_nrSold
-        check (Products.nrSold >= 0),
+        check ("Products".nrItems >= 0),
     constraint check_price
-        check (Products.price > 0)
+        check ("Products".price > 0),
+    constraint nrSold
+        check ("Products".nrSold >= 0)
 );
 
 create table Sellers
@@ -35,36 +39,40 @@ create table Users
     authToken   integer not null,
     lastLogin   datetime,
     address     varchar not null,
-    dateCreated date    not null
+    dateCreated date    not null,
+    firstName   varchar,
+    lastName    varchar
+);
+
+create table "Order"
+(
+    idUser         integer not null
+        constraint Order_pk
+            primary key
+        constraint Order_Users_email_fk
+            references Users (email),
+    date           date    not null,
+    deliveryStatus varchar not null,
+    totalProducts  float,
+    totalShipping  float,
+    totalPrice     float,
+    paymentMethod  varchar,
+    paymentStatus  boolean,
+    address        varchar
 );
 
 create table CartItems
 (
-    idUser    varchar not null
-        constraint CartItems_Users_email_fk
-            references Users (email),
+    idOrder   varchar not null
+        constraint CartItems_Order_idUser_fk
+            references "Order",
     idProduct integer not null
         constraint CartItems_Products_id_fk
             references Products,
     nrOrdered integer not null,
     constraint CartItems_pk
-        primary key (idUser, idProduct),
+        primary key (idOrder, idProduct),
     constraint check_nrOrdered
-        check (CartItems.nrOrdered > 0)
+        check (nrOrdered > 0)
 );
-
-create table "Order"
-(
-    idProduct      integer not null
-        constraint Order_Products_id_fk
-            references Products,
-    idUser         varchar not null
-        constraint Order_Users_email_fk
-            references Users (email),
-    date           date    not null,
-    deliveryStatus varchar not null,
-    constraint Order_pk
-        primary key (idUser, idProduct)
-);
-
 

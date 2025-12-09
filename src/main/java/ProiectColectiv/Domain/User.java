@@ -9,7 +9,6 @@ public class User extends Entity<String> {
     private String authToken;
     private String firstName;
     private String lastName;
-    private String email;
     private LocalDateTime lastLogin;
     private String address;
     private LocalDate dateCreated;
@@ -17,7 +16,7 @@ public class User extends Entity<String> {
     public User(String firstName, String lastName, String email, String password, boolean isAdmin, String authToken, LocalDateTime lastLogin, String address, LocalDate dateCreated) {
         this.firstName = firstName;
         this.lastName = lastName;
-        this.email = email;
+        setId(email);
         this.password = password;
         this.isAdmin = isAdmin;
         this.authToken = authToken;
@@ -43,11 +42,11 @@ public class User extends Entity<String> {
     }
 
     public String getEmail() {
-        return email;
+        return getId();
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        setId(email);
     }
 
     public String getPassword() {
