@@ -55,9 +55,9 @@ public class ProductRepo implements IProductRepo {
             ps.setFloat(5, entity.getPrice());
             ps.setInt(6, entity.getQuantity());
             ps.setString(7, entity.getCurrency());
-            ps.setInt(9, entity.getNrSold());
-            ps.setString(10, entity.getCategory());
-            ps.setInt(11, entity.getId());
+            ps.setInt(8, entity.getNrSold());
+            ps.setString(9, entity.getCategory());
+            ps.setInt(10, entity.getId());
 
             ps.executeUpdate();
 
@@ -91,7 +91,7 @@ public class ProductRepo implements IProductRepo {
     public void save(Product entity) {
         Connection con = dbUtils.getConnection();
         String query = "INSERT INTO Products(name, description, slug, brand, price, nrItems," +
-                " currency, nrSold, category) VALUES (?,?,?,?,?,?,?,?,?,?)";
+                " currency, nrSold, category) VALUES (?,?,?,?,?,?,?,?,?)";
 
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, entity.getName());
@@ -102,8 +102,8 @@ public class ProductRepo implements IProductRepo {
             ps.setInt(6, entity.getQuantity());
             ps.setString(7, entity.getCurrency());
 
-            ps.setInt(9, entity.getNrSold());
-            ps.setString(10, entity.getCategory());
+            ps.setInt(8, entity.getNrSold());
+            ps.setString(9, entity.getCategory());
 
             ps.executeUpdate();
 
@@ -113,7 +113,7 @@ public class ProductRepo implements IProductRepo {
                 if (rs.next()) {
                     int id = rs.getInt(1);
                     if (entity.getFileData() != null) {
-                        try (FileOutputStream fos = new FileOutputStream(IMAGE_FOLDER + id)) {
+                        try (FileOutputStream fos = new FileOutputStream(IMAGE_FOLDER + id +".png")) {
                             fos.write(entity.getFileData());
                         } catch (IOException e) {
                             System.err.println("Error saving image file: " + e.getMessage());
