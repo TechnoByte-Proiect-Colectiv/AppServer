@@ -34,7 +34,6 @@ public class UserRepo implements IUserRepo {
                     boolean isAdmin = rs.getBoolean("isAdmin");
                     String authToken = rs.getString("authToken");
                     String adress = rs.getString("address");
-
                     Timestamp timestampLogin = rs.getTimestamp("lastLogin");
                     LocalDateTime lastLogin = (timestampLogin != null) ? timestampLogin.toLocalDateTime() : null;
 
@@ -66,7 +65,7 @@ public class UserRepo implements IUserRepo {
 
             ps.setObject(7, entity.getLastLogin());
             ps.setString(8, entity.getAddress());
-            ps.setObject(9, entity.getDateCreated());
+            ps.setDate(9, Date.valueOf(entity.getDateCreated()));
 
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -87,7 +86,7 @@ public class UserRepo implements IUserRepo {
             ps.setString(5, entity.getAuthToken());
             ps.setObject(6, entity.getLastLogin());
             ps.setString(7, entity.getAddress());
-            ps.setObject(8, entity.getDateCreated());
+            ps.setDate(8, Date.valueOf(entity.getDateCreated()));
             ps.setString(9, entity.getEmail());
 
             ps.executeUpdate();
@@ -137,7 +136,7 @@ public class UserRepo implements IUserRepo {
                 return users;
             }
         } catch (SQLException e) {
-            System.err.println("Error DB findById: " + e);
+            System.err.println("Error DB getAllUsers: " + e);
         }
         return null;
     }
