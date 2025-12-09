@@ -45,7 +45,7 @@ public class ProductRepo implements IProductRepo {
     public void update(Product entity) {
         Connection conn = dbUtils.getConnection();
         String query = "UPDATE Products SET name=?, description=?, slug=?, brand=?, price=?," +
-                " nrItems=?, currency=?, image=?, nrSold=?, category=? WHERE id=?";
+                " nrItems=?, currency=?, nrSold=?, category=? WHERE id=?";
 
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, entity.getName());
@@ -91,7 +91,7 @@ public class ProductRepo implements IProductRepo {
     public void save(Product entity) {
         Connection con = dbUtils.getConnection();
         String query = "INSERT INTO Products(name, description, slug, brand, price, nrItems," +
-                " currency, image, nrSold, category) VALUES (?,?,?,?,?,?,?,?,?,?)";
+                " currency, nrSold, category) VALUES (?,?,?,?,?,?,?,?,?,?)";
 
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, entity.getName());

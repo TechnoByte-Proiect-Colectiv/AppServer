@@ -124,8 +124,8 @@ public class OrderRepo implements IOrderRepo {
         Date sqlDate = rs.getDate("orderDate");
         LocalDate orderDate = (sqlDate != null) ? sqlDate.toLocalDate() : null;
 
-        Float totalProducts = rs.getInt("totalProducts");
-        Float totalShipping = rs.getInt("totalShipping");
+        Float totalProducts = rs.getFloat("totalProducts");
+        Float totalShipping = rs.getFloat("totalShipping");
         Float totalPrice = rs.getFloat("totalPrice");
         String paymentMethod = rs.getString("paymentMethod");
         Boolean paymentStatus = rs.getBoolean("paymentStatus");
