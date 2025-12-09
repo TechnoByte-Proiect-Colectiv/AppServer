@@ -3,12 +3,11 @@ package ProiectColectiv.Repository.DatabaseRepo;
 import ProiectColectiv.Domain.User;
 import ProiectColectiv.Repository.Interfaces.IUserRepo;
 import ProiectColectiv.Repository.Utils.JdbcUtils;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+
+import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Properties;
 
 public class UserRepo implements IUserRepo {
@@ -19,27 +18,37 @@ public class UserRepo implements IUserRepo {
     }
 
     @Override
-    public User findById(String s) {
+    public User findById(String id) {
         Connection con = dbUtils.getConnection();
-        try (PreparedStatement preStmt=con.prepareStatement("select * from Products where id=?")){
-            preStmt.setString(1,s);
-            try(ResultSet rs=preStmt.executeQuery()){
+        String query = "SELECT * FROM Users WHERE id=?";
+
+        try (PreparedStatement preStmt = con.prepareStatement(query)) {
+            preStmt.setString(1, id);
+
+            try (ResultSet rs = preStmt.executeQuery()) {
                 if (rs.next()) {
-                    String id = rs.getString("id");
+                    String extractedId = rs.getString("id");
+                    String firstName = rs.getString("firstName");
+                    String lastName = rs.getString("lastName");
+                    String email = rs.getString("email");
                     String password = rs.getString("password");
-                    Boolean isAdmin = rs.getBoolean("isAdmin");
+                    boolean isAdmin = rs.getBoolean("isAdmin");
                     String authToken = rs.getString("authToken");
-                    LocalDateTime lastLogin = rs.getTimestamp("lastLogin").toLocalDateTime();
-                    String adress = rs.getString("adress");
-                    LocalDate dateCreated = rs.getDate("dateCreated").toLocalDate();
-                    User user = new User(password, isAdmin, authToken, lastLogin, adress, dateCreated);
-                    user.setId(id);
+                    String adress = rs.getString("address");
+
+                    Timestamp timestampLogin = rs.getTimestamp("lastLogin");
+                    LocalDateTime lastLogin = (timestampLogin != null) ? timestampLogin.toLocalDateTime() : null;
+
+                    Date sqlDateCreated = rs.getDate("dateCreated");
+                    LocalDate dateCreated = (sqlDateCreated != null) ? sqlDateCreated.toLocalDate() : null;
+
+                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated);
+                    user.setId(extractedId);
                     return user;
                 }
             }
-        }
-        catch (SQLException e){
-            System.err.println("Error DB " + e);
+        } catch (SQLException e) {
+            System.err.println("Error DB findById: " + e);
         }
         return null;
     }
@@ -47,50 +56,95 @@ public class UserRepo implements IUserRepo {
     @Override
     public void save(User entity) {
         Connection con = dbUtils.getConnection();
-        LocalDateTime lastLogin = entity.getLastLogin();
-        LocalDate dateCreated = entity.getDateCreated();
-        try (PreparedStatement ps = con.prepareStatement("INSERT INTO USER(email,password,isAdmin,authToken,lastLogin,adress,dateCreated) values (?,?,?,?,?,?,?)")){
-            ps.setString(1,entity.getId());
-            ps.setString(2,entity.getPassword());
-            ps.setBoolean(3,entity.isAdmin());
-            ps.setString(4,entity.getAuthToken());
-            ps.setObject(5,lastLogin);
-            ps.setString(6,entity.getAdress());
-            ps.setObject(7,dateCreated);
-        }
-        catch (SQLException e) {
-            System.err.println(e.getMessage());
+        String query = "INSERT INTO Users(id, firstName, lastName, email, password, isAdmin, authToken, lastLogin, address, dateCreated) VALUES (?,?,?,?,?,?,?,?,?,?)";
+
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setString(1, entity.getId());
+            ps.setString(2, entity.getFirstName());
+            ps.setString(3, entity.getLastName());
+            ps.setString(4, entity.getEmail());
+            ps.setString(5, entity.getPassword());
+            ps.setBoolean(6, entity.isAdmin());
+            ps.setString(7, entity.getAuthToken());
+
+            ps.setObject(8, entity.getLastLogin());
+            ps.setString(9, entity.getAddress());
+            ps.setObject(10, entity.getDateCreated());
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error DB save: " + e.getMessage());
         }
     }
 
     @Override
     public void update(User entity) {
         Connection con = dbUtils.getConnection();
-        LocalDateTime lastLogin = entity.getLastLogin();
-        LocalDate dateCreated = entity.getDateCreated();
-        try (PreparedStatement ps = con.prepareStatement("UPDATE Users SET password=?, isAdmin=?, authToken=?, lastLogin=?, adress=?, dateCreated=? WHERE id=?")){
-            ps.setString(1,entity.getPassword());
-            ps.setBoolean(2,entity.isAdmin());
-            ps.setString(3,entity.getAuthToken());
-            ps.setObject(4,lastLogin);
-            ps.setString(5,entity.getAdress());
-            ps.setObject(6,dateCreated);
-            ps.setString(7, entity.getId());
+        String query = "UPDATE Users SET firstName=?, lastName=?, email=?, password=?, isAdmin=?, authToken=?, lastLogin=?, address=?, dateCreated=? WHERE id=?";
+
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setString(1, entity.getFirstName());
+            ps.setString(2, entity.getLastName());
+            ps.setString(3, entity.getEmail());
+            ps.setString(4, entity.getPassword());
+            ps.setBoolean(5, entity.isAdmin());
+            ps.setString(6, entity.getAuthToken());
+            ps.setObject(7, entity.getLastLogin());
+            ps.setString(8, entity.getAddress());
+            ps.setObject(9, entity.getDateCreated());
+            ps.setString(10, entity.getId());
+
             ps.executeUpdate();
-        }
-        catch (SQLException e) {
-            System.err.println(e.getMessage());
+        } catch (SQLException e) {
+            System.err.println("Error DB update: " + e.getMessage());
         }
     }
 
     @Override
-    public void delete(String s) {
+    public void delete(String id) {
         Connection con = dbUtils.getConnection();
-        try (PreparedStatement ps = con.prepareStatement("DELETE * FROM Users WHERE id=?")) {
-            ps.setString(1,s);
+        String query = "DELETE FROM Users WHERE id=?";
+
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setString(1, id);
             ps.executeUpdate();
         } catch (SQLException e) {
-            System.err.println(e.getMessage());
+            System.err.println("Error DB delete: " + e.getMessage());
         }
+    }
+
+    @Override
+    public Iterable<User> getAllUsers() {
+        Connection con = dbUtils.getConnection();
+        String query = "SELECT * FROM Users";
+        ArrayList<User> users = new ArrayList<>();
+        try (PreparedStatement preStmt = con.prepareStatement(query)) {
+            try (ResultSet rs = preStmt.executeQuery()) {
+                while (rs.next()) {
+                    String extractedId = rs.getString("id");
+                    String firstName = rs.getString("firstName");
+                    String lastName = rs.getString("lastName");
+                    String email = rs.getString("email");
+                    String password = rs.getString("password");
+                    boolean isAdmin = rs.getBoolean("isAdmin");
+                    String authToken = rs.getString("authToken");
+                    String adress = rs.getString("address");
+
+                    Timestamp timestampLogin = rs.getTimestamp("lastLogin");
+                    LocalDateTime lastLogin = (timestampLogin != null) ? timestampLogin.toLocalDateTime() : null;
+
+                    Date sqlDateCreated = rs.getDate("dateCreated");
+                    LocalDate dateCreated = (sqlDateCreated != null) ? sqlDateCreated.toLocalDate() : null;
+
+                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated);
+                    user.setId(extractedId);
+                    users.add(user);
+                }
+                return users;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error DB findById: " + e);
+        }
+        return null;
     }
 }

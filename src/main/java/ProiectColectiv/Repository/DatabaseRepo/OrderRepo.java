@@ -1,15 +1,12 @@
 package ProiectColectiv.Repository.DatabaseRepo;
 
-import ProiectColectiv.Domain.CartItem;
 import ProiectColectiv.Domain.CompositeKey;
 import ProiectColectiv.Domain.Order;
 import ProiectColectiv.Repository.Interfaces.IOrderRepo;
 import ProiectColectiv.Repository.Utils.JdbcUtils;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -22,110 +19,119 @@ public class OrderRepo implements IOrderRepo {
     }
 
     @Override
-    public Order findById(CompositeKey<String,Integer> compositeKey) {
+    public Order findById(String userId) {
         Connection con = dbUtils.getConnection();
-        try (PreparedStatement preStmt=con.prepareStatement("select * from Orders WHERE userID = ? AND productID = ?")){
+        String query = "SELECT * FROM Orders WHERE userID = ?";
 
-            /// aici este mai sus :))
-            preStmt.setString(1, compositeKey.key1()); // key1 este userID (String)
-            preStmt.setInt(2, compositeKey.key2());   // key2 este productID (Integer)
+        try (PreparedStatement preStmt = con.prepareStatement(query)) {
+            preStmt.setString(1, userId); // userID
 
-            preStmt.setObject(1,compositeKey);
-            try (ResultSet rs=preStmt.executeQuery()){
-                if(rs.next())
-                {
-                    String userID = rs.getString("userID");
-                    Integer productID = rs.getInt("productID");
-                    Integer quantity = rs.getInt("quantity");
-                    String deliveryStatus = rs.getString("deliveryStatus");
-
-                    /// nu mai trebuie setID daca am facut mai sus setarea la compositeKey
-                    return new Order(userID,productID,quantity,deliveryStatus);
+            try (ResultSet rs = preStmt.executeQuery()) {
+                if (rs.next()) {
+                    return extractOrderFromResultSet(rs);
                 }
             }
-        }
-        catch (SQLException e) {
-            System.err.println("Error DB "+e);
+        } catch (SQLException e) {
+            System.err.println("Error DB findById Order: " + e);
         }
         return null;
     }
 
     @Override
-    public void update(Order entity) {
-        Connection conn = dbUtils.getConnection();
-        try (PreparedStatement ps = conn.prepareStatement("UPDATE Orders SET quantity = ?, deliveryStatus = ? WHERE userID = ? AND productID = ?")) {
-            /// 1. Setează câmpurile de actualizat (non-cheie)
-            ps.setInt(1, entity.getQuantity());
-            ps.setString(2, entity.getDeliveryStatus());
-
-            /// 2. Setează câmpurile cheie pentru clauza WHERE
-            ps.setString(3, entity.getUserID()); // key1
-            ps.setInt(4, entity.getProductID()); // key2
-
-            ps.executeUpdate();
-        }
-        catch (SQLException e) {
-            System.err.println("Error DB " + e.getMessage());
-        }
-    }
-
-    @Override
-    public void delete(CompositeKey<String, Integer> compositeKey) {
-        Connection conn = dbUtils.getConnection();
-        try (PreparedStatement ps = conn.prepareStatement("DELETE FROM Orders WHERE userID = ? AND productID = ?")) {
-
-            ps.setString(1, compositeKey.key1()); // userID
-            ps.setInt(2, compositeKey.key2());   // productID
-
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            System.err.println("Error DB " + e.getMessage());
-        }
-    }
-
-    @Override
     public void save(Order entity) {
         Connection conn = dbUtils.getConnection();
+        String query = "INSERT INTO Orders (userID, quantity, orderDate, totalProducts, totalShipping, totalPrice, paymentMethod, paymentStatus, deliveryStatus, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (PreparedStatement ps = conn.prepareStatement("INSERT INTO Orders (userID, productID, quantity, deliveryStatus) VALUES (?, ?, ?, ?)")) {
-
-            ps.setString(1, entity.getUserID());   // key1
-            ps.setInt(2, entity.getProductID());   // key2
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, entity.getUserID());
             ps.setInt(3, entity.getQuantity());
-            ps.setString(4, entity.getDeliveryStatus());
+            ps.setObject(4, entity.getOrderDate());
+            ps.setFloat(5, entity.getTotalProducts());
+            ps.setFloat(6, entity.getTotalShipping());
+            ps.setFloat(7, entity.getTotalPrice());
+            ps.setString(8, entity.getPaymentMethod());
+            ps.setBoolean(9, entity.getPaymentStatus());
+            ps.setString(10, entity.getDeliveryStatus());
+            ps.setString(11, entity.getAddress());
 
             ps.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("Error DB " + e.getMessage());
+            System.err.println("Error DB save Order: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void update(Order entity) {
+        Connection conn = dbUtils.getConnection();
+        String query = "UPDATE Orders SET quantity=?, orderDate=?, totalProducts=?, totalShipping=?, totalPrice=?, paymentMethod=?, paymentStatus=?, deliveryStatus=?, address=? WHERE userID=?";
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, entity.getQuantity());
+            ps.setObject(2, entity.getOrderDate());
+            ps.setFloat(3, entity.getTotalProducts());
+            ps.setFloat(4, entity.getTotalShipping());
+            ps.setFloat(5, entity.getTotalPrice());
+            ps.setString(6, entity.getPaymentMethod());
+            ps.setBoolean(7, entity.getPaymentStatus());
+            ps.setString(8, entity.getDeliveryStatus());
+            ps.setString(9, entity.getAddress());
+            ps.setString(10, entity.getUserID());
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error DB update Order: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void delete(String userId) {
+        Connection conn = dbUtils.getConnection();
+        String query = "DELETE FROM Orders WHERE userID = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, userId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error DB delete Order: " + e.getMessage());
         }
     }
 
     @Override
     public Iterable<Order> findAllForUser(String userID) {
-        List<Order> items = new ArrayList<>(); // lista goala
+        List<Order> items = new ArrayList<>();
         Connection con = dbUtils.getConnection();
 
-        // caut TOATE intrările pentru un userID
-        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM CartItem WHERE userID = ?")) {
+        String query = "SELECT * FROM Orders WHERE userID = ?";
 
-            ps.setString(1, userID); // setez parametrul userID
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setString(1, userID);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    // datele pentru rândul curent
-                    String currentUserID = rs.getString("userID");
-                    Integer productID = rs.getInt("productID");
-                    Integer quantity = rs.getInt("quantity");
-                    String deliveryStatus = rs.getString("deliveryStatus");
-
-                    // creez obiectul și îl adăugăm în listă
-                    items.add(new Order(currentUserID, productID, quantity, deliveryStatus));
+                    items.add(extractOrderFromResultSet(rs));
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error DB " + e);
+            System.err.println("Error DB findAllForUser Order: " + e);
         }
 
         return items;
+    }
+
+    private Order extractOrderFromResultSet(ResultSet rs) throws SQLException {
+        String userID = rs.getString("userID");
+        Integer quantity = rs.getInt("quantity");
+        Date sqlDate = rs.getDate("orderDate");
+        LocalDate orderDate = (sqlDate != null) ? sqlDate.toLocalDate() : null;
+
+        Float totalProducts = rs.getFloat("totalProducts");
+        Float totalShipping = rs.getFloat("totalShipping");
+        Float totalPrice = rs.getFloat("totalPrice");
+        String paymentMethod = rs.getString("paymentMethod");
+        Boolean paymentStatus = rs.getBoolean("paymentStatus");
+        String deliveryStatus = rs.getString("deliveryStatus");
+        String address = rs.getString("address");
+
+        return new Order(userID, quantity, orderDate, totalProducts, totalShipping, totalPrice, paymentMethod, paymentStatus, deliveryStatus, address);
     }
 }

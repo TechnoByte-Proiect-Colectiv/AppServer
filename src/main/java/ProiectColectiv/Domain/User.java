@@ -1,22 +1,52 @@
 package ProiectColectiv.Domain;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class User extends Entity<String> {
     private String password;
     private boolean isAdmin;
-    private  String authToken;
+    private String authToken;
+    private String firstName;
+    private String lastName;
     private LocalDateTime lastLogin;
-    private  String adress;
+    private String address;
     private LocalDate dateCreated;
 
-    public User(String password, boolean isAdmin, String authToken, LocalDateTime lastLogin, String Adress, LocalDate dateCreated) {
-        this.dateCreated = dateCreated;
-        this.adress = Adress;
-        this.lastLogin = lastLogin;
-        this.authToken = authToken;
-        this.isAdmin = isAdmin;
+    public User(String firstName, String lastName, String email, String password, boolean isAdmin, String authToken, LocalDateTime lastLogin, String address, LocalDate dateCreated) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        setId(email);
         this.password = password;
+        this.isAdmin = isAdmin;
+        this.authToken = authToken;
+        this.lastLogin = lastLogin;
+        this.address = address;
+        this.dateCreated = dateCreated;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getEmail() {
+        return getId();
+    }
+
+    public void setEmail(String email) {
+        setId(email);
     }
 
     public String getPassword() {
@@ -51,12 +81,12 @@ public class User extends Entity<String> {
         this.lastLogin = lastLogin;
     }
 
-    public String getAdress() {
-        return adress;
+    public String getAddress() {
+        return address;
     }
 
-    public void setAdress(String Adress) {
-        adress = Adress;
+    public void setAdress(String address) {
+        this.address = address;
     }
 
     public LocalDate getDateCreated() {
