@@ -57,16 +57,16 @@ public class UserRepo implements IUserRepo {
         String query = "INSERT INTO Users(firstName, lastName, email, password, isAdmin, authToken, lastLogin, address, dateCreated) VALUES (?,?,?,?,?,?,?,?,?)";
 
         try (PreparedStatement ps = con.prepareStatement(query)) {
-            ps.setString(2, entity.getFirstName());
-            ps.setString(3, entity.getLastName());
-            ps.setString(4, entity.getEmail());
-            ps.setString(5, entity.getPassword());
-            ps.setBoolean(6, entity.isAdmin());
-            ps.setString(7, entity.getAuthToken());
+            ps.setString(1, entity.getFirstName());
+            ps.setString(2, entity.getLastName());
+            ps.setString(3, entity.getEmail());
+            ps.setString(4, entity.getPassword());
+            ps.setBoolean(5, entity.isAdmin());
+            ps.setString(6, entity.getAuthToken());
 
-            ps.setObject(8, entity.getLastLogin());
-            ps.setString(9, entity.getAddress());
-            ps.setObject(10, entity.getDateCreated());
+            ps.setObject(7, entity.getLastLogin());
+            ps.setString(8, entity.getAddress());
+            ps.setObject(9, entity.getDateCreated());
 
             ps.executeUpdate();
         } catch (SQLException e) {
