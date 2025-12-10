@@ -39,7 +39,7 @@ public class UserController {
     @PutMapping("/changePassword")
     public ResponseEntity<?> changePassword(@RequestBody User user) {
         user.setPassword(BCrypt.withDefaults().hashToString(12, user.getPassword().toCharArray()));
-        userRepo.update(user);
+        userRepo.updatePassword(user);
         return new ResponseEntity<>("Password changed", HttpStatus.OK);
     }
 
@@ -52,5 +52,26 @@ public class UserController {
     public ResponseEntity<?> deleteUser(@PathVariable String id) {
         userRepo.delete(id);
         return new ResponseEntity<>("User deleted", HttpStatus.OK);
+    }
+
+    @GetMapping("/forgot")
+    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
+        if(userRepo.findById(email) != null) {
+            return new ResponseEntity<>(userRepo.findById(email), HttpStatus.OK);
+        }
+        else {
+            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile(@RequestParam String email) {
+        User foundUser = userRepo.findById(email);
+        if (foundUser != null) {
+            return new ResponseEntity<>(foundUser, HttpStatus.OK);
+        }
+        else {
+            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+        }
     }
 }

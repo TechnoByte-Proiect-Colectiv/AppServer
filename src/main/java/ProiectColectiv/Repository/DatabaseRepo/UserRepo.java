@@ -95,6 +95,20 @@ public class UserRepo implements IUserRepo {
         }
     }
 
+    public void updatePassword(User entity) {
+        Connection con = dbUtils.getConnection();
+        String query = "UPDATE Users SET password=? WHERE email=?";
+
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setString(1, entity.getPassword());
+            ps.setString(2, entity.getEmail());
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error DB update: " + e.getMessage());
+        }
+    }
+
     @Override
     public void delete(String id) {
         Connection con = dbUtils.getConnection();

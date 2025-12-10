@@ -2,6 +2,7 @@ package ProiectColectiv.Repository.DatabaseRepo;
 
 import ProiectColectiv.Domain.CompositeKey;
 import ProiectColectiv.Domain.Order;
+import ProiectColectiv.Repository.Interfaces.ICartItemRepo;
 import ProiectColectiv.Repository.Interfaces.IOrderRepo;
 import ProiectColectiv.Repository.Utils.JdbcUtils;
 
@@ -21,7 +22,7 @@ public class OrderRepo implements IOrderRepo {
     @Override
     public Order findById(String userId) {
         Connection con = dbUtils.getConnection();
-        String query = "SELECT * FROM Orders WHERE userID = ?";
+        String query = "SELECT * FROM Orders WHERE idUser = ?";
 
         try (PreparedStatement preStmt = con.prepareStatement(query)) {
             preStmt.setString(1, userId); // userID
@@ -40,19 +41,18 @@ public class OrderRepo implements IOrderRepo {
     @Override
     public void save(Order entity) {
         Connection conn = dbUtils.getConnection();
-        String query = "INSERT INTO Orders (userID, quantity, orderDate, totalProducts, totalShipping, totalPrice, paymentMethod, paymentStatus, deliveryStatus, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO Orders (idUser, orderDate, totalProducts, totalShipping, totalPrice, paymentMethod, paymentStatus, deliveryStatus, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, entity.getUserID());
-            ps.setInt(3, entity.getQuantity());
-            ps.setObject(4, entity.getOrderDate());
-            ps.setFloat(5, entity.getTotalProducts());
-            ps.setFloat(6, entity.getTotalShipping());
-            ps.setFloat(7, entity.getTotalPrice());
-            ps.setString(8, entity.getPaymentMethod());
-            ps.setBoolean(9, entity.getPaymentStatus());
-            ps.setString(10, entity.getDeliveryStatus());
-            ps.setString(11, entity.getAddress());
+            ps.setObject(2, Date.valueOf(entity.getOrderDate()));
+            ps.setFloat(3, entity.getTotalProducts());
+            ps.setFloat(4, entity.getTotalShipping());
+            ps.setFloat(5, entity.getTotalPrice());
+            ps.setString(6, entity.getPaymentMethod());
+            ps.setBoolean(7, entity.getPaymentStatus());
+            ps.setString(8, entity.getDeliveryStatus());
+            ps.setString(9, entity.getAddress());
 
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -63,19 +63,18 @@ public class OrderRepo implements IOrderRepo {
     @Override
     public void update(Order entity) {
         Connection conn = dbUtils.getConnection();
-        String query = "UPDATE Orders SET quantity=?, orderDate=?, totalProducts=?, totalShipping=?, totalPrice=?, paymentMethod=?, paymentStatus=?, deliveryStatus=?, address=? WHERE userID=?";
+        String query = "UPDATE Orders SET orderDate=?, totalProducts=?, totalShipping=?, totalPrice=?, paymentMethod=?, paymentStatus=?, deliveryStatus=?, address=? WHERE idUser=?";
 
         try (PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setInt(1, entity.getQuantity());
-            ps.setObject(2, entity.getOrderDate());
-            ps.setFloat(3, entity.getTotalProducts());
-            ps.setFloat(4, entity.getTotalShipping());
-            ps.setFloat(5, entity.getTotalPrice());
-            ps.setString(6, entity.getPaymentMethod());
-            ps.setBoolean(7, entity.getPaymentStatus());
-            ps.setString(8, entity.getDeliveryStatus());
-            ps.setString(9, entity.getAddress());
-            ps.setString(10, entity.getUserID());
+            ps.setObject(1, entity.getOrderDate());
+            ps.setFloat(2, entity.getTotalProducts());
+            ps.setFloat(3, entity.getTotalShipping());
+            ps.setFloat(4, entity.getTotalPrice());
+            ps.setString(5, entity.getPaymentMethod());
+            ps.setBoolean(6, entity.getPaymentStatus());
+            ps.setString(7, entity.getDeliveryStatus());
+            ps.setString(8, entity.getAddress());
+            ps.setString(9, entity.getUserID());
 
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -86,7 +85,7 @@ public class OrderRepo implements IOrderRepo {
     @Override
     public void delete(String userId) {
         Connection conn = dbUtils.getConnection();
-        String query = "DELETE FROM Orders WHERE userID = ?";
+        String query = "DELETE FROM Orders WHERE idUser = ?";
 
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, userId);
@@ -96,31 +95,8 @@ public class OrderRepo implements IOrderRepo {
         }
     }
 
-    @Override
-    public Iterable<Order> findAllForUser(String userID) {
-        List<Order> items = new ArrayList<>();
-        Connection con = dbUtils.getConnection();
-
-        String query = "SELECT * FROM Orders WHERE userID = ?";
-
-        try (PreparedStatement ps = con.prepareStatement(query)) {
-            ps.setString(1, userID);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    items.add(extractOrderFromResultSet(rs));
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error DB findAllForUser Order: " + e);
-        }
-
-        return items;
-    }
-
     private Order extractOrderFromResultSet(ResultSet rs) throws SQLException {
-        String userID = rs.getString("userID");
-        Integer quantity = rs.getInt("quantity");
+        String userID = rs.getString("idUser");
         Date sqlDate = rs.getDate("orderDate");
         LocalDate orderDate = (sqlDate != null) ? sqlDate.toLocalDate() : null;
 
@@ -132,6 +108,6 @@ public class OrderRepo implements IOrderRepo {
         String deliveryStatus = rs.getString("deliveryStatus");
         String address = rs.getString("address");
 
-        return new Order(userID, quantity, orderDate, totalProducts, totalShipping, totalPrice, paymentMethod, paymentStatus, deliveryStatus, address);
+        return new Order(userID, orderDate, totalProducts, totalShipping, totalPrice, paymentMethod, paymentStatus, deliveryStatus, address);
     }
 }

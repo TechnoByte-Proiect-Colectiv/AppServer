@@ -23,7 +23,7 @@ public class CartItemRepo implements ICartItemRepo {
     @Override
     public CartItem findById(CompositeKey<String, Integer> compositeKey) {
         Connection con = dbUtils.getConnection();
-        String query = "SELECT * FROM CartItem WHERE idOrder = ? AND productID = ?";
+        String query = "SELECT * FROM CartItems WHERE idOrder = ? AND idProduct = ?";
 
         try (PreparedStatement preStmt = con.prepareStatement(query)) {
             preStmt.setString(1, compositeKey.key1()); // key1 este idOrder (String)
@@ -32,7 +32,7 @@ public class CartItemRepo implements ICartItemRepo {
             try (ResultSet rs = preStmt.executeQuery()) {
                 if (rs.next()) {
                     String idOrder = rs.getString("idOrder");
-                    Integer productID = rs.getInt("productID");
+                    Integer productID = rs.getInt("idProduct");
                     Integer nrOrdered = rs.getInt("nrOrdered");
 
                     return new CartItem(idOrder, productID, nrOrdered);
@@ -47,7 +47,7 @@ public class CartItemRepo implements ICartItemRepo {
     @Override
     public void save(CartItem entity) {
         Connection conn = dbUtils.getConnection();
-        String query = "INSERT INTO CartItem (idOrder, productID, nrOrdered) VALUES (?, ?, ?)";
+        String query = "INSERT INTO CartItems (idOrder, idProduct, nrOrdered) VALUES (?, ?, ?)";
 
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, entity.getOrderID());
@@ -63,7 +63,7 @@ public class CartItemRepo implements ICartItemRepo {
     @Override
     public void update(CartItem entity) {
         Connection conn = dbUtils.getConnection();
-        String query = "UPDATE CartItem SET nrOrdered = ? WHERE idOrder = ? AND productID = ?";
+        String query = "UPDATE CartItems SET nrOrdered = ? WHERE idOrder = ? AND idProduct = ?";
 
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, entity.getNrOrdered());
@@ -80,7 +80,7 @@ public class CartItemRepo implements ICartItemRepo {
     @Override
     public void delete(CompositeKey<String, Integer> compositeKey) {
         Connection conn = dbUtils.getConnection();
-        String query = "DELETE FROM CartItem WHERE idOrder = ? AND productID = ?";
+        String query = "DELETE FROM CartItems WHERE idOrder = ? AND idProduct = ?";
 
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, compositeKey.key1()); // idOrder
@@ -93,11 +93,11 @@ public class CartItemRepo implements ICartItemRepo {
     }
 
     @Override
-    public Iterable<CartItem> findAllForUser(String idOrder) {
+    public Iterable<CartItem> findAllForOrder(String idOrder) {
         List<CartItem> items = new ArrayList<>();
         Connection con = dbUtils.getConnection();
 
-        String query = "SELECT * FROM CartItem WHERE idOrder = ?";
+        String query = "SELECT * FROM CartItems WHERE idOrder = ?";
 
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, idOrder);
@@ -105,7 +105,7 @@ public class CartItemRepo implements ICartItemRepo {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     String currentIdOrder = rs.getString("idOrder");
-                    Integer productID = rs.getInt("productID");
+                    Integer productID = rs.getInt("idProduct");
                     Integer nrOrdered = rs.getInt("nrOrdered");
 
                     items.add(new CartItem(currentIdOrder, productID, nrOrdered));
@@ -119,9 +119,9 @@ public class CartItemRepo implements ICartItemRepo {
     }
 
     @Override
-    public void clearCartForUser(String idOrder) {
+    public void clearCart(String idOrder) {
         Connection conn = dbUtils.getConnection();
-        String query = "DELETE FROM CartItem WHERE idOrder = ?";
+        String query = "DELETE FROM CartItems WHERE idOrder = ?";
 
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, idOrder);
