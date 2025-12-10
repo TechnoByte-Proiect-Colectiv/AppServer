@@ -1,5 +1,7 @@
 package ProiectColectiv.Service;
 
+import ProiectColectiv.Repository.DatabaseRepo.CartItemRepo;
+import ProiectColectiv.Repository.DatabaseRepo.OrderRepo;
 import ProiectColectiv.Repository.DatabaseRepo.ProductRepo;
 import ProiectColectiv.Repository.DatabaseRepo.UserRepo;
 import org.springframework.context.annotation.Bean;
@@ -31,5 +33,15 @@ public class Config {
     @Bean
     ProductRepo productRepo() {
         return new ProductRepo(getProps());
+    }
+
+    @Bean
+    OrderRepo orderRepo() {
+        return new OrderRepo(getProps());
+    }
+
+    @Bean
+    CartItemRepo cartItemRepo() {
+        return new CartItemRepo(getProps());
     }
 }

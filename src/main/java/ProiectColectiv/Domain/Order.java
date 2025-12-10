@@ -3,7 +3,6 @@ package ProiectColectiv.Domain;
 import java.time.LocalDate;
 
 public class Order extends Entity<String>{
-    private Integer quantity;
     private LocalDate orderDate;      // created at
     private Float totalProducts;
     private Float totalShipping;
@@ -13,13 +12,12 @@ public class Order extends Entity<String>{
     private String deliveryStatus;    // order status
     private String address;
 
-    public Order(String userID, Integer quantity, LocalDate orderDate,
+    public Order(String userID, LocalDate orderDate,
                  Float totalProducts, Float totalShipping, Float totalPrice,
                  String paymentMethod, Boolean paymentStatus, String deliveryStatus, String address) {
 
         super.setId(userID);
 
-        this.quantity = quantity;
         this.orderDate = orderDate;
         this.totalProducts = totalProducts;
         this.totalShipping = totalShipping;
@@ -38,14 +36,6 @@ public class Order extends Entity<String>{
 
     public void setUserID(String userID) {
          setId(userID);
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
     }
 
     public LocalDate getOrderDate() {
