@@ -42,6 +42,21 @@ public class ProductRepo implements IProductRepo {
     }
 
     @Override
+    public Product findBySlug(String slug){
+        Connection con = dbUtils.getConnection();
+        try (PreparedStatement preStmt = con.prepareStatement("SELECT * FROM Products WHERE slug=?")) {
+            preStmt.setString(1, slug);
+            try (ResultSet rs = preStmt.executeQuery()) {
+                if (rs.next())
+                    return mapProductFromDB(rs);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error DB findBySlug: " + e);
+        }
+        return null;
+    }
+
+    @Override
     public void update(Product entity) {
         Connection conn = dbUtils.getConnection();
         String query = "UPDATE Products SET name=?, description=?, slug=?, brand=?, price=?," +

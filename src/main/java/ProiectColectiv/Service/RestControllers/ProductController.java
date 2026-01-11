@@ -16,9 +16,9 @@ public class ProductController {
     @Autowired
     private IProductRepo productRepo;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getProductById(@PathVariable Integer id) {
-        Product p = productRepo.findById(id);
+    @GetMapping("/{slug}")
+    public ResponseEntity<?> getProductBySlug(@PathVariable String slug) {
+        Product p = productRepo.findBySlug(slug);
         if(p == null) {
             return new ResponseEntity<>("Product not found", HttpStatus.NOT_FOUND);
         }
