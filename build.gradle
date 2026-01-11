@@ -21,9 +21,6 @@ dependencies {
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     implementation("com.google.code.gson:gson:2.13.2")
 
-    // https://mvnrepository.com/artifact/com.javax0/levenshtein
-    implementation("com.javax0:levenshtein:1.0.0")
-
     // https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc
     implementation 'org.xerial:sqlite-jdbc:3.49.1.0'
 
@@ -31,6 +28,9 @@ dependencies {
     implementation("at.favre.lib:bcrypt:0.10.2")
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+
+    // https://mvnrepository.com/artifact/com.javax0/levenshtein
+    implementation("com.javax0:levenshtein:1.0.0")
 }
 
 test {

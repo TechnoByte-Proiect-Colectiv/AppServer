@@ -24,7 +24,7 @@ create table CartItems
 (
     idOrder   varchar not null
         constraint CartItems_Order_idUser_fk
-            references "Order" (),
+            references Orders,
     idProduct integer not null
         constraint CartItems_Products_id_fk
             references Products,
