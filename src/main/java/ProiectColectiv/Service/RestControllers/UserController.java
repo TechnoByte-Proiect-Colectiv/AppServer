@@ -56,8 +56,8 @@ public class UserController {
         }
     }
 
-    @PostMapping("/create")
-    public User create(@RequestBody User user) {
+    @PostMapping("/signUp")
+    public User signUp(@RequestBody User user) {
         user.setPassword(BCrypt.withDefaults().hashToString(12, user.getPassword().toCharArray()));
         userRepo.save(user);
         return user;
