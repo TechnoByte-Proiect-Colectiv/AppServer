@@ -21,6 +21,9 @@ dependencies {
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     implementation("com.google.code.gson:gson:2.13.2")
 
+    // https://mvnrepository.com/artifact/com.javax0/levenshtein
+    implementation("com.javax0:levenshtein:1.0.0")
+
     // https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc
     implementation 'org.xerial:sqlite-jdbc:3.49.1.0'
 
@@ -29,8 +32,10 @@ dependencies {
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
 
-    // https://mvnrepository.com/artifact/com.javax0/levenshtein
-    implementation("com.javax0:levenshtein:1.0.0")
+    // for JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 }
 
 test {

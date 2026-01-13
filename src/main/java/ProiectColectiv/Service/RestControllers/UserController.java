@@ -3,35 +3,32 @@ package ProiectColectiv.Service.RestControllers;
 import ProiectColectiv.Domain.LoginRequest;
 import ProiectColectiv.Domain.User;
 import ProiectColectiv.Repository.Interfaces.IUserRepo;
+import ProiectColectiv.Repository.Utils.JWTUtils;
 import at.favre.lib.crypto.bcrypt.BCrypt;
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.UUID;
-import java.util.Collections;
-import java.time.LocalDateTime;
 
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @CrossOrigin(origins = "*")
-@org.springframework.web.bind.annotation.RestController
+@RestController
 @RequestMapping("/api/user")
 public class UserController {
+
+    private final IUserRepo userRepo;
+    private final JWTUtils jwtUtils;
+
+    // Folosim constructor injection (este "best practice" in Spring Boot modern)
     @Autowired
-    private IUserRepo userRepo;
-
-
-   /* @GetMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User user) {
-        User repoUser = userRepo.findById(user.getId());
-        if (BCrypt.verifyer().verify(user.getPassword().toCharArray(), repoUser.getPassword()).verified){
-            return new ResponseEntity<>(repoUser, HttpStatus.OK);
-        }
-        else {
-            return new ResponseEntity<>("Wrong password", HttpStatus.UNAUTHORIZED);
-        }
-    }*/
+    public UserController(IUserRepo userRepo, JWTUtils jwtUtils) {
+        this.userRepo = userRepo;
+        this.jwtUtils = jwtUtils;
+    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
@@ -41,26 +38,42 @@ public class UserController {
             return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
         }
 
+        // Verificam parola
         if (BCrypt.verifyer().verify(loginRequest.getPassword().toCharArray(), repoUser.getPassword()).verified) {
 
-            String token = UUID.randomUUID().toString();
+            // PASUL 1: Generam Token-ul JWT folosind Utils
+            // Aici presupunem ca userul nu e admin (false).
+            // Daca ai un camp isAdmin in User, foloseste: repoUser.isAdmin()
+            String token = jwtUtils.generateToken(repoUser.getEmail(), false);
 
-            repoUser.setAuthToken(token);
+            // PASUL 2: Actualizam doar data logarii
+            // NOTA: La JWT nu e obligatoriu sa salvezi token-ul in baza de date (stateless).
+            // Daca vrei totusi sa il salvezi pentru o verificare extra, poti lasa linia cu setAuthToken.
+            // repoUser.setAuthToken(token); <--- O poti scoate daca vrei full stateless
+
             repoUser.setLastLogin(LocalDateTime.now());
-
             userRepo.update(repoUser);
 
-            return new ResponseEntity<>(Collections.singletonMap("authToken", token), HttpStatus.OK);
+            // PASUL 3: Returnam token-ul intr-un format JSON frumos
+            Map<String, String> response = new HashMap<>();
+            response.put("token", token);
+            response.put("email", repoUser.getEmail());
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } else {
             return new ResponseEntity<>("Wrong password", HttpStatus.UNAUTHORIZED);
         }
     }
 
-    @PostMapping("/signUp")
-    public User signUp(@RequestBody User user) {
+    @PostMapping("/create")
+    public ResponseEntity<?> create(@RequestBody User user) {
+        if (userRepo.findById(user.getEmail()) != null) {
+            return new ResponseEntity<>("User already exists", HttpStatus.CONFLICT);
+        }
+
         user.setPassword(BCrypt.withDefaults().hashToString(12, user.getPassword().toCharArray()));
         userRepo.save(user);
-        return user;
+        return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
 
     @PutMapping("/changePassword")
@@ -83,8 +96,9 @@ public class UserController {
 
     @GetMapping("/forgot")
     public ResponseEntity<?> forgotPassword(@RequestParam String email) {
-        if(userRepo.findById(email) != null) {
-            return new ResponseEntity<>(userRepo.findById(email), HttpStatus.OK);
+        User user = userRepo.findById(email);
+        if(user != null) {
+            return new ResponseEntity<>(user, HttpStatus.OK);
         }
         else {
             return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
@@ -92,13 +106,19 @@ public class UserController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<?> getProfile(@RequestParam String email) {
-        User foundUser = userRepo.findById(email);
-        if (foundUser != null) {
-            return new ResponseEntity<>(foundUser, HttpStatus.OK);
+    public ResponseEntity<?> getProfile(@RequestHeader(value = "Authorization", required = false) String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return new ResponseEntity<>("Missing Token", HttpStatus.UNAUTHORIZED);
         }
-        else {
-            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+
+        String jwt = token.substring(7);
+
+        if (jwtUtils.validateToken(jwt)) {
+            String email = jwtUtils.extractEmail(jwt);
+            User foundUser = userRepo.findById(email);
+            return new ResponseEntity<>(foundUser, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Invalid Token", HttpStatus.UNAUTHORIZED);
         }
     }
 }
