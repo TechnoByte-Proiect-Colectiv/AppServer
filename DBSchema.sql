@@ -20,21 +20,6 @@ create table Products
         check ("Products".nrSold >= 0)
 );
 
-create table CartItems
-(
-    idOrder   varchar not null
-        constraint CartItems_Order_idUser_fk
-            references "Order" (),
-    idProduct integer not null
-        constraint CartItems_Products_id_fk
-            references Products,
-    nrOrdered integer not null,
-    constraint CartItems_pk
-        primary key (idOrder, idProduct),
-    constraint check_nrOrdered
-        check (nrOrdered > 0)
-);
-
 create table Sellers
 (
     id          integer not null
@@ -54,19 +39,15 @@ create table Users
     authToken   integer,
     lastLogin   datetime,
     address     varchar,
-    dateCreated date not null,
+    dateCreated date    not null,
     firstName   varchar,
     lastName    varchar,
     phoneNumber varchar
 );
 
-DROP TABLE IF EXISTS Orders;
-
 create table Orders
 (
     idUser          varchar not null
-        constraint Orders_pk
-            primary key
         constraint Orders_Users_email_fk
             references Users (email),
     orderDate       date,
@@ -78,7 +59,41 @@ create table Orders
     paymentMethod   varchar,
     paymentStatus   boolean,
     billingAddress  varchar,
-    shippingAddress varchar
+    shippingAddress varchar,
+    idOrder         integer not null
+        constraint Orders_pk
+            primary key
 );
 
+create table CartItems
+(
+    idOrder   varchar not null
+        constraint CartItems_Order_idUser_fk
+            references Orders,
+    idProduct integer not null
+        constraint CartItems_Products_id_fk
+            references Products,
+    nrOrdered integer not null,
+    constraint CartItems_pk
+        primary key (idOrder, idProduct),
+    constraint check_nrOrdered
+        check (nrOrdered > 0)
+);
+
+create table Reviews
+(
+    idProduct        integer not null
+        constraint Reviews_Products_id_fk
+            references Products,
+    idUser           varchar not null
+        constraint Reviews_Users_email_fk
+            references Users (email),
+    rating           integer not null,
+    title            varchar not null,
+    description      varchar,
+    createdAt        Date    not null,
+    verifiedPurchase boolean not null,
+    constraint Reviews_pk
+        primary key (idUser, idProduct)
+);
 

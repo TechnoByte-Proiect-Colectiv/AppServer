@@ -42,15 +42,18 @@ public class ProductController {
         return new ResponseEntity<>(productRepo.getMostSoldProducts(nr), HttpStatus.OK);
     }
 
-    @GetMapping("/search")
+    @GetMapping
     public ResponseEntity<?> filteredSearch(
             @RequestParam(required = false) String search,
-            @RequestBody(required = false) Filter filter) {
-
+            @RequestParam(required = false) Float priceLower,
+            @RequestParam(required = false) Float priceHigher,
+            @RequestParam(required = false) Boolean inStock)
+    {
+        Filter filter = new Filter(priceLower,priceHigher,inStock);
         return new ResponseEntity<>(productRepo.filteredSearch(filter, search), HttpStatus.OK);
     }
 
-    @GetMapping
+    @GetMapping("all")
     public ResponseEntity<?> getAllProducts() {
         return new ResponseEntity<>(productRepo.getAllProducts(), HttpStatus.OK);
     }

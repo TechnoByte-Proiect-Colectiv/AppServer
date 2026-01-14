@@ -1,9 +1,7 @@
 package ProiectColectiv.Service;
 
-import ProiectColectiv.Repository.DatabaseRepo.CartItemRepo;
-import ProiectColectiv.Repository.DatabaseRepo.OrderRepo;
-import ProiectColectiv.Repository.DatabaseRepo.ProductRepo;
-import ProiectColectiv.Repository.DatabaseRepo.UserRepo;
+import ProiectColectiv.Repository.DatabaseRepo.*;
+import ProiectColectiv.Repository.Utils.JWTUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -43,5 +41,15 @@ public class Config {
     @Bean
     CartItemRepo cartItemRepo() {
         return new CartItemRepo(getProps());
+    }
+
+    @Bean
+    ReviewRepo reviewRepo() {
+        return new ReviewRepo(getProps());
+    }
+
+    @Bean
+    JWTUtils jwtUtils() {
+        return new JWTUtils();
     }
 }

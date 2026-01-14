@@ -5,6 +5,12 @@ public class Filter {
     private Float priceHigher;
     private Boolean filterInStock;
 
+    public Filter(Float priceLower, Float priceHigher, Boolean filterInStock) {
+        this.priceLower = priceLower;
+        this.priceHigher = priceHigher;
+        this.filterInStock = filterInStock;
+    }
+
     public void setFilterInStock() {
         this.filterInStock = true;
     }
