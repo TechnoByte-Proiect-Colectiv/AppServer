@@ -20,6 +20,51 @@ create table Products
         check ("Products".nrSold >= 0)
 );
 
+create table Sellers
+(
+    id          integer not null
+        constraint Sellers_pk
+            primary key autoincrement,
+    name        varchar not null,
+    description varchar
+);
+
+create table Users
+(
+    email       varchar not null
+        constraint Users_pk
+            unique,
+    password    varchar not null,
+    isAdmin     boolean,
+    authToken   integer,
+    lastLogin   datetime,
+    address     varchar,
+    dateCreated date    not null,
+    firstName   varchar,
+    lastName    varchar,
+    phoneNumber varchar
+);
+
+create table Orders
+(
+    idUser          varchar not null
+        constraint Orders_Users_email_fk
+            references Users (email),
+    orderDate       date,
+    deliveryStatus  varchar,
+    totalProducts   float,
+    totalShipping   float,
+    totalPrice      float,
+    currency        varchar,
+    paymentMethod   varchar,
+    paymentStatus   boolean,
+    billingAddress  varchar,
+    shippingAddress varchar,
+    idOrder         integer not null
+        constraint Orders_pk
+            primary key
+);
+
 create table CartItems
 (
     idOrder   varchar not null
@@ -35,52 +80,20 @@ create table CartItems
         check (nrOrdered > 0)
 );
 
-create table Sellers
+create table Reviews
 (
-    id          integer not null
-        constraint Sellers_pk
-            primary key autoincrement,
-    name        varchar not null,
-    description varchar
-);
-
-DROP TABLE IF EXISTS Users;
-
-create table Users
-(
-    email       varchar not null
-        constraint Users_pk
-            unique,
-    password    varchar not null,
-    isAdmin     boolean,
-    authToken   integer,
-    lastLogin   datetime,
-    address     varchar,
-    dateCreated date not null,
-    firstName   varchar,
-    lastName    varchar,
-    phoneNumber varchar
-);
-
-DROP TABLE IF EXISTS Orders;
-
-create table Orders
-(
-    idUser          varchar not null
-        constraint Orders_pk
-            primary key
-        constraint Orders_Users_email_fk
+    idProduct        integer not null
+        constraint Reviews_Products_id_fk
+            references Products,
+    idUser           varchar not null
+        constraint Reviews_Users_email_fk
             references Users (email),
-    orderDate       date,
-    deliveryStatus  varchar,
-    totalProducts   float,
-    totalShipping   float,
-    totalPrice      float,
-    currency        varchar,
-    paymentMethod   varchar,
-    paymentStatus   boolean,
-    billingAddress  varchar,
-    shippingAddress varchar
+    rating           integer not null,
+    title            varchar not null,
+    description      varchar,
+    createdAt        Date    not null,
+    verifiedPurchase boolean not null,
+    constraint Reviews_pk
+        primary key (idUser, idProduct)
 );
-
 
