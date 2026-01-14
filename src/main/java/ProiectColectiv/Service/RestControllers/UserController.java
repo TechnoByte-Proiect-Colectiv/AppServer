@@ -47,6 +47,7 @@ public class UserController {
             // Daca vrei totusi sa il salvezi pentru o verificare extra, poti lasa linia cu setAuthToken.
             // repoUser.setAuthToken(token); <--- O poti scoate daca vrei full stateless
 
+            repoUser.setAuthToken(token);
             repoUser.setLastLogin(LocalDateTime.now());
             userRepo.update(repoUser);
 
@@ -95,7 +96,7 @@ public class UserController {
         existingUser.setLastName(updatedUser.getLastName());
         existingUser.setAdress(updatedUser.getAddress());
 
-        if(updatedUser.getPassword() != null) existingUser.setPassword(updatedUser.getPassword());
+        if(updatedUser.getPassword() != null) existingUser.setPassword(BCrypt.withDefaults().hashToString(12, existingUser.getPassword().toCharArray()));;
 
         userRepo.update(existingUser);
         return new ResponseEntity<>(existingUser, HttpStatus.OK);

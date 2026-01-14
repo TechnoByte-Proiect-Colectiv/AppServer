@@ -97,7 +97,7 @@ public class UserRepo implements IUserRepo {
     @Override
     public void update(User entity) {
         Connection con = dbUtils.getConnection();
-        String query = "UPDATE Users SET firstName=?, lastName=?, password=?, isAdmin=?, authToken=?, lastLogin=?, address=?, dateCreated=?, phoneNumber WHERE email=?";
+        String query = "UPDATE Users SET firstName=?, lastName=?, password=?, isAdmin=?, authToken=?, lastLogin=?, address=?, dateCreated=?, phoneNumber=? WHERE email=?";
 
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, entity.getFirstName());
@@ -114,8 +114,8 @@ public class UserRepo implements IUserRepo {
             ps.setObject(6, entity.getLastLogin());
             ps.setString(7, entity.getAddress());
             ps.setDate(8, Date.valueOf(entity.getDateCreated()));
-            ps.setString(9, entity.getEmail());
-            ps.setString(10, entity.getPhoneNumber());
+            ps.setString(10, entity.getEmail());
+            ps.setString(9, entity.getPhoneNumber());
 
             ps.executeUpdate();
         } catch (SQLException e) {

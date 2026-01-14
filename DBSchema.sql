@@ -44,6 +44,8 @@ create table Sellers
     description varchar
 );
 
+DROP TABLE IF EXISTS Users;
+
 create table Users
 (
     email       varchar not null
