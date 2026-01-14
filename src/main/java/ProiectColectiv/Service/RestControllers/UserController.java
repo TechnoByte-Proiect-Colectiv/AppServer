@@ -8,6 +8,7 @@ import at.favre.lib.crypto.bcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -61,6 +62,112 @@ public class UserController {
             return new ResponseEntity<>("Wrong password", HttpStatus.UNAUTHORIZED);
         }
     }
+
+    @GetMapping("/address")
+    public ResponseEntity<?> getUserAddress(
+            @RequestHeader("Authorization") String authHeader) {
+
+        try {
+            String token = authHeader.replace("Bearer ", "");
+
+            if (!jwtUtils.validateToken(token)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Invalid or expired token");
+            }
+
+            String userEmail = jwtUtils.extractEmail(token);
+            User user = userRepo.findById(userEmail);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("User not found");
+            }
+
+            String address = user.getAddress();
+            if (address == null) {
+                address = "";
+            }
+
+            return ResponseEntity.ok(address);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to get addresses: " + e.getMessage());
+        }
+    }
+
+//    @DeleteMapping("/address/{addressId}")
+    @DeleteMapping("/address")
+    public ResponseEntity<?> deleteAddress(
+            @RequestHeader("Authorization") String authHeader
+//            ,@PathVariable String addressId
+    ) {
+
+        try {
+            String token = authHeader.replace("Bearer ", "");
+
+            if (!jwtUtils.validateToken(token)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Invalid or expired token");
+            }
+
+            String userEmail = jwtUtils.extractEmail(token);
+            User user = userRepo.findById(userEmail);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("User not found");
+            }
+
+            String address = user.getAddress();
+            if (address == null || address.equals("")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("No addresses found");
+            }
+
+            user.setAdress("");
+            userRepo.update(user);
+
+            return ResponseEntity.ok("Address deleted successfully");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to delete address: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/address")
+    public ResponseEntity<?> addAddress(
+            @RequestHeader("Authorization") String authHeader, @RequestBody String address) {
+
+        try {
+            String token = authHeader.replace("Bearer ", "");
+
+            if (!jwtUtils.validateToken(token)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Invalid or expired token");
+            }
+
+            String userEmail = jwtUtils.extractEmail(token);
+
+            User user = userRepo.findById(userEmail);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("User not found");
+            }
+
+            user.setAdress(address);
+
+            userRepo.update(user);
+
+            return ResponseEntity.ok(address);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to add address: " + e.getMessage());
+        }
+    }
+
 
     @PostMapping("/signUp")
     public ResponseEntity<?> signUp(@RequestBody User user) {

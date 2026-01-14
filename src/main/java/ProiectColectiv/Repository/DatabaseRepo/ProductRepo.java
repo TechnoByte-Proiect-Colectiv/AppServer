@@ -105,10 +105,15 @@ public class ProductRepo implements IProductRepo {
     @Override
     public void save(Product entity) {
         Connection con = dbUtils.getConnection();
-        String query = "INSERT INTO Products(name, description, slug, brand, price, nrItems," +
-                " currency, nrSold, category) VALUES (?,?,?,?,?,?,?,?,?)";
+
+        String query = """
+        INSERT INTO Products(name, description, slug, brand, price, nrItems,
+                             currency, nrSold, category)
+        VALUES (?,?,?,?,?,?,?,?,?)
+        """;
 
         try (PreparedStatement ps = con.prepareStatement(query)) {
+
             ps.setString(1, entity.getName());
             ps.setString(2, entity.getDescription());
             ps.setString(3, entity.getSlug());
@@ -116,19 +121,25 @@ public class ProductRepo implements IProductRepo {
             ps.setFloat(5, entity.getPrice());
             ps.setInt(6, entity.getQuantity());
             ps.setString(7, entity.getCurrency());
-
             ps.setInt(8, entity.getNrSold());
             ps.setString(9, entity.getCategory());
 
             ps.executeUpdate();
 
-            String queryId = "SELECT last_insert_rowid()";
-            try (PreparedStatement ps2 = con.prepareStatement(queryId)) {
-                ResultSet rs = ps2.executeQuery();
+            // 🔥 IA ID-ul generat
+            try (PreparedStatement ps2 = con.prepareStatement("SELECT last_insert_rowid()");
+                 ResultSet rs = ps2.executeQuery()) {
+
                 if (rs.next()) {
                     int id = rs.getInt(1);
+
+                    // 🔥 ASTA LIPSEA
+                    entity.setId(id);
+
+                    // Salvează imaginea
                     if (entity.getFileData() != null) {
-                        try (FileOutputStream fos = new FileOutputStream(IMAGE_FOLDER + id +".png")) {
+                        try (FileOutputStream fos =
+                                     new FileOutputStream(IMAGE_FOLDER + id + ".png")) {
                             fos.write(entity.getFileData());
                         } catch (IOException e) {
                             System.err.println("Error saving image file: " + e.getMessage());
@@ -136,10 +147,12 @@ public class ProductRepo implements IProductRepo {
                     }
                 }
             }
+
         } catch (SQLException e) {
             System.err.println("Error DB save: " + e.getMessage());
         }
     }
+
 
     @Override
     public Iterable<Product> getMostSoldProducts(int nr) {
