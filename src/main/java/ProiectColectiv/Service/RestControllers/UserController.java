@@ -53,7 +53,7 @@ public class UserController {
             // PASUL 3: Returnam token-ul intr-un format JSON frumos
             Map<String, String> response = new HashMap<>();
             response.put("token", token);
-            response.put("email", repoUser.getEmail());
+            response.put("user", repoUser.getEmail()); // se trimite userul sub forma mailului (id-ul)
 
             return new ResponseEntity<>(response, HttpStatus.OK);
         } else {
@@ -61,8 +61,8 @@ public class UserController {
         }
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<?> create(@RequestBody User user) {
+    @PostMapping("/signUp")
+    public ResponseEntity<?> signUp(@RequestBody User user) {
         if (userRepo.findById(user.getEmail()) != null) {
             return new ResponseEntity<>("User already exists", HttpStatus.CONFLICT);
         }
@@ -83,6 +83,22 @@ public class UserController {
     @GetMapping("/users")
     public ResponseEntity<?> getAllUsers() {
         return new ResponseEntity<>(userRepo.getAllUsers(), HttpStatus.OK);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable String id, @RequestBody User updatedUser) {
+        User existingUser = userRepo.findById(id);
+        if (existingUser == null) return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+
+        // Actualizezi câmpurile (exemplu)
+        existingUser.setFirstName(updatedUser.getFirstName());
+        existingUser.setLastName(updatedUser.getLastName());
+        existingUser.setAdress(updatedUser.getAddress());
+
+        if(updatedUser.getPassword() != null) existingUser.setPassword(updatedUser.getPassword());
+
+        userRepo.update(existingUser);
+        return new ResponseEntity<>(existingUser, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
