@@ -17,6 +17,20 @@ public class UserRepo implements IUserRepo {
         dbUtils = new JdbcUtils(props);
     }
 
+    private LocalDateTime parseLocalDateTime(String str) {
+        if (str == null) return null;
+        try {
+            return LocalDateTime.parse(str.replace(" ", "T"));
+        } catch (Exception e) {
+            try {
+                long millis = Long.parseLong(str);
+                return LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(millis), java.time.ZoneId.systemDefault());
+            } catch (Exception e2) {
+                return null;
+            }
+        }
+    }
+
     @Override
     public User findById(String id) {
         Connection con = dbUtils.getConnection();
@@ -34,9 +48,9 @@ public class UserRepo implements IUserRepo {
                     boolean isAdmin = rs.getBoolean("isAdmin");
                     String authToken = rs.getString("authToken");
                     String adress = rs.getString("address");
-                    Timestamp timestampLogin = rs.getTimestamp("lastLogin");
+                    // Timestamp timestampLogin = rs.getTimestamp("lastLogin");
                     String phoneNumber = rs.getString("phoneNumber");
-                    LocalDateTime lastLogin = (timestampLogin != null) ? timestampLogin.toLocalDateTime() : null;
+                    LocalDateTime lastLogin = parseLocalDateTime(rs.getString("lastLogin"));
 
                     Date sqlDateCreated = rs.getDate("dateCreated");
                     LocalDate dateCreated = (sqlDateCreated != null) ? sqlDateCreated.toLocalDate() : null;
