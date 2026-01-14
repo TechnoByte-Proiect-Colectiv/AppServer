@@ -53,10 +53,11 @@ create table Users
     isAdmin     boolean,
     authToken   integer,
     lastLogin   datetime,
-    address     varchar not null,
-    dateCreated date    not null,
+    address     varchar,
+    dateCreated date not null,
     firstName   varchar,
-    lastName    varchar
+    lastName    varchar,
+    phoneNumber varchar
 );
 
 DROP TABLE IF EXISTS Orders;

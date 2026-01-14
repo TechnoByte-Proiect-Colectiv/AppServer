@@ -12,8 +12,9 @@ public class User extends Entity<String> {
     private LocalDateTime lastLogin;
     private String address;
     private LocalDate dateCreated;
+    private String phoneNumber;
 
-    public User(String firstName, String lastName, String email, String password, boolean isAdmin, String authToken, LocalDateTime lastLogin, String address, LocalDate dateCreated) {
+    public User(String firstName, String lastName, String email, String password, boolean isAdmin, String authToken, LocalDateTime lastLogin, String address, LocalDate dateCreated, String phoneNumber) {
         this.firstName = firstName;
         this.lastName = lastName;
         setId(email);
@@ -23,6 +24,7 @@ public class User extends Entity<String> {
         this.lastLogin = lastLogin;
         this.address = address;
         this.dateCreated = dateCreated;
+        this.phoneNumber = phoneNumber;
     }
 
     public String getFirstName() {
@@ -96,4 +98,8 @@ public class User extends Entity<String> {
     public void setDateCreated(LocalDate dateCreated) {
         this.dateCreated = dateCreated;
     }
+
+    public String getPhoneNumber() { return  phoneNumber; }
+
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 }
