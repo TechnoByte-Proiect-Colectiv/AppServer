@@ -1,6 +1,5 @@
 package ProiectColectiv.Repository.DatabaseRepo;
 
-import ProiectColectiv.Domain.CartItem;
 import ProiectColectiv.Domain.Order;
 import ProiectColectiv.Repository.Interfaces.IOrderRepo;
 import ProiectColectiv.Repository.Utils.JdbcUtils;
@@ -21,7 +20,6 @@ public class OrderRepo implements IOrderRepo {
     @Override
     public Order findById(Integer orderId) {
         Connection con = dbUtils.getConnection();
-        // Selectam tot, dar maparea se face jos in 'extractOrderFromResultSet'
         String query = "SELECT * FROM Orders WHERE idOrder = ?";
 
         try (PreparedStatement preStmt = con.prepareStatement(query)) {
@@ -40,18 +38,21 @@ public class OrderRepo implements IOrderRepo {
 
     @Override
     public void save(Order entity) {
+
+    }
+
+    @Override
+    public Integer saveWithReturn(Order entity) {
         Connection conn = dbUtils.getConnection();
-        // Am adaugat coloanele noi: currency, billingAddress, shippingAddress
-        // Am scos: address
+        int generatedId = -1;
         String query = "INSERT INTO Orders (idUser, orderDate, totalProducts, totalShipping, totalPrice, currency, paymentMethod, paymentStatus, deliveryStatus, billingAddress, shippingAddress) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, entity.getUserID());
 
-            // Convertim LocalDate in String pentru SQLite
             ps.setString(2, entity.getOrderDate() != null ? entity.getOrderDate().toString() : null);
 
-            ps.setObject(3, entity.getTotalProducts()); // setObject gestioneaza mai bine null-urile decat setFloat
+            ps.setObject(3, entity.getTotalProducts());
             ps.setObject(4, entity.getTotalShipping());
             ps.setObject(5, entity.getTotalPrice());
             ps.setString(6, entity.getCurrency());
@@ -61,10 +62,20 @@ public class OrderRepo implements IOrderRepo {
             ps.setString(10, entity.getBillingAddress());
             ps.setString(11, entity.getShippingAddress());
 
-            ps.executeUpdate();
+            int affectedRows = ps.executeUpdate();
+
+            if (affectedRows > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        generatedId = rs.getInt(1);
+                    }
+                }
+            }
         } catch (SQLException e) {
             System.err.println("Error DB save Order: " + e.getMessage());
         }
+
+        return generatedId;
     }
 
     @Override
@@ -84,7 +95,6 @@ public class OrderRepo implements IOrderRepo {
             ps.setString(9, entity.getBillingAddress());
             ps.setString(10, entity.getShippingAddress());
 
-            // WHERE clause
             ps.setInt(11, entity.getId());
 
             ps.executeUpdate();
@@ -107,24 +117,32 @@ public class OrderRepo implements IOrderRepo {
     }
 
     private Order extractOrderFromResultSet(ResultSet rs) throws SQLException {
-        // Parsare data din String (SQLite) in LocalDate
         String dateString = rs.getString("orderDate");
         LocalDate orderDate = (dateString != null) ? LocalDate.parse(dateString) : null;
 
-        // Extragere valori
         Integer orderId = rs.getInt("idOrder");
         String userID = rs.getString("idUser");
-        Float totalProducts = rs.getObject("totalProducts", Float.class);
-        Float totalShipping = rs.getObject("totalShipping", Float.class);
-        Float totalPrice = rs.getObject("totalPrice", Float.class);
+
+        float tProd = rs.getFloat("totalProducts");
+        Float totalProducts = rs.wasNull() ? null : tProd;
+
+        float tShip = rs.getFloat("totalShipping");
+        Float totalShipping = rs.wasNull() ? null : tShip;
+
+        float tPrice = rs.getFloat("totalPrice");
+        Float totalPrice = rs.wasNull() ? null : tPrice;
+
         String currency = rs.getString("currency");
         String paymentMethod = rs.getString("paymentMethod");
-        Boolean paymentStatus = rs.getObject("paymentStatus", Boolean.class);
+
+        boolean pStat = rs.getBoolean("paymentStatus");
+        Boolean paymentStatus = rs.wasNull() ? null : pStat;
+
         String deliveryStatus = rs.getString("deliveryStatus");
         String billingAddress = rs.getString("billingAddress");
         String shippingAddress = rs.getString("shippingAddress");
 
-        return new Order(orderId,userID, orderDate, totalProducts, totalShipping, totalPrice, currency,
+        return new Order(orderId, userID, orderDate, totalProducts, totalShipping, totalPrice, currency,
                 paymentMethod, paymentStatus, deliveryStatus, billingAddress, shippingAddress);
     }
 
@@ -133,7 +151,7 @@ public class OrderRepo implements IOrderRepo {
         List<Order> items = new ArrayList<>();
         Connection con = dbUtils.getConnection();
 
-        String query = "SELECT * FROM CartItems WHERE idUser = ?";
+        String query = "SELECT * FROM Orders WHERE idUser = ?";
 
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, userId);
@@ -142,22 +160,33 @@ public class OrderRepo implements IOrderRepo {
                 while (rs.next()) {
                     String dateString = rs.getString("orderDate");
                     LocalDate orderDate = (dateString != null) ? LocalDate.parse(dateString) : null;
+
                     Integer orderId = rs.getInt("idOrder");
-                    Float totalProducts = rs.getObject("totalProducts", Float.class);
-                    Float totalShipping = rs.getObject("totalShipping", Float.class);
-                    Float totalPrice = rs.getObject("totalPrice", Float.class);
+
+                    float tProd = rs.getFloat("totalProducts");
+                    Float totalProducts = rs.wasNull() ? null : tProd;
+
+                    float tShip = rs.getFloat("totalShipping");
+                    Float totalShipping = rs.wasNull() ? null : tShip;
+
+                    float tPrice = rs.getFloat("totalPrice");
+                    Float totalPrice = rs.wasNull() ? null : tPrice;
+
                     String currency = rs.getString("currency");
                     String paymentMethod = rs.getString("paymentMethod");
-                    Boolean paymentStatus = rs.getObject("paymentStatus", Boolean.class);
+
+                    boolean pStat = rs.getBoolean("paymentStatus");
+                    Boolean paymentStatus = rs.wasNull() ? null : pStat;
+
                     String deliveryStatus = rs.getString("deliveryStatus");
                     String billingAddress = rs.getString("billingAddress");
                     String shippingAddress = rs.getString("shippingAddress");
 
-                    items.add(new Order(orderId,userId,orderDate,totalProducts,totalShipping,totalPrice,currency,paymentMethod,paymentStatus,deliveryStatus,billingAddress,shippingAddress));
+                    items.add(new Order(orderId, userId, orderDate, totalProducts, totalShipping, totalPrice, currency, paymentMethod, paymentStatus, deliveryStatus, billingAddress, shippingAddress));
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error DB findAllForOrder: " + e);
+            System.err.println("Error DB getAllOrdersByUser: " + e);
         }
 
         return items;

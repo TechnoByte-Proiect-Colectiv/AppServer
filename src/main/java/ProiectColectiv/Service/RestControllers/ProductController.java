@@ -5,16 +5,44 @@ import ProiectColectiv.Repository.Interfaces.IProductRepo;
 import ProiectColectiv.Repository.Utils.Filter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/product")
 public class ProductController {
+    private static final String IMAGE_FOLDER = "Images/";
+
     @Autowired
     private IProductRepo productRepo;
+
+    @GetMapping("/{id}/image")
+    public ResponseEntity<byte[]> getProductImage(@PathVariable Integer id) {
+        try {
+            String filePath = IMAGE_FOLDER + id + ".png";
+            File file = new File(filePath);
+
+            if (!file.exists()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            byte[] imageBytes = Files.readAllBytes(file.toPath());
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_PNG)
+                    .body(imageBytes);
+
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 
     @GetMapping("/{slug}")
     public ResponseEntity<?> getProductBySlug(@PathVariable String slug) {

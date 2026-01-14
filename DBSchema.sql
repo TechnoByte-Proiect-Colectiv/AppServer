@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS Reviews;
 DROP TABLE IF EXISTS CartItems;
 DROP TABLE IF EXISTS Orders;
+DROP TABLE IF EXISTS Addresses;
 DROP TABLE IF EXISTS Users;
 DROP TABLE IF EXISTS Sellers;
 DROP TABLE IF EXISTS Products;
@@ -34,11 +35,27 @@ CREATE TABLE Users
     isAdmin     BOOLEAN,
     authToken   INTEGER,
     lastLogin   DATETIME,
-    address     VARCHAR,
     dateCreated DATE NOT NULL,
     firstName   VARCHAR,
     lastName    VARCHAR,
     phoneNumber VARCHAR
+);
+
+CREATE TABLE Addresses
+(
+    id          VARCHAR PRIMARY KEY, -- UUID generated in Java
+    userEmail   VARCHAR NOT NULL,
+    type        VARCHAR CHECK (type IN ('billing', 'shipping')),
+    firstName   VARCHAR,
+    lastName    VARCHAR,
+    street      VARCHAR,
+    city        VARCHAR,
+    county      VARCHAR,
+    postalCode  VARCHAR,
+    country     VARCHAR,
+    phoneNumber VARCHAR,
+    isPrimary   BOOLEAN DEFAULT 0,
+    CONSTRAINT Addresses_Users_fk FOREIGN KEY (userEmail) REFERENCES Users (email) ON DELETE CASCADE
 );
 
 CREATE TABLE Orders

@@ -2,6 +2,8 @@ package ProiectColectiv.Domain;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class User extends Entity<String> {
     private String password;
@@ -10,11 +12,11 @@ public class User extends Entity<String> {
     private String firstName;
     private String lastName;
     private LocalDateTime lastLogin;
-    private String address;
+    private List<Address> addresses;
     private LocalDate dateCreated;
     private String phoneNumber;
 
-    public User(String firstName, String lastName, String email, String password, boolean isAdmin, String authToken, LocalDateTime lastLogin, String address, LocalDate dateCreated, String phoneNumber) {
+    public User(String firstName, String lastName, String email, String password, boolean isAdmin, String authToken, LocalDateTime lastLogin, LocalDate dateCreated, String phoneNumber) {
         this.firstName = firstName;
         this.lastName = lastName;
         setId(email);
@@ -22,9 +24,13 @@ public class User extends Entity<String> {
         this.isAdmin = isAdmin;
         this.authToken = authToken;
         this.lastLogin = lastLogin;
-        this.address = address;
         this.dateCreated = dateCreated;
         this.phoneNumber = phoneNumber;
+        this.addresses = new ArrayList<>();
+    }
+
+    public User() {
+        this.addresses = new ArrayList<>();
     }
 
     public String getFirstName() {
@@ -83,12 +89,12 @@ public class User extends Entity<String> {
         this.lastLogin = lastLogin;
     }
 
-    public String getAddress() {
-        return address;
+    public List<Address> getAddresses() {
+        return addresses;
     }
 
-    public void setAdress(String address) {
-        this.address = address;
+    public void setAddresses(List<Address> addresses) {
+        this.addresses = addresses;
     }
 
     public LocalDate getDateCreated() {

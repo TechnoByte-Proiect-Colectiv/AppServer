@@ -1,11 +1,11 @@
 package ProiectColectiv.Domain;
 
-public class CartItem extends Entity<CompositeKey<String,Integer>> {
-    private String idOrder;
+public class CartItem extends Entity<CompositeKey<Integer,Integer>> {
+    private Integer idOrder;
     private Integer productID;
     private Integer nrOrdered;
 
-    public CartItem(String idOrder, Integer productID, Integer nrOrdered) {
+    public CartItem(Integer idOrder, Integer productID, Integer nrOrdered) {
         super.setId(new CompositeKey<>(idOrder, productID));
 
         this.idOrder = idOrder;
@@ -13,11 +13,14 @@ public class CartItem extends Entity<CompositeKey<String,Integer>> {
         this.nrOrdered = nrOrdered;
     }
 
-    public String getOrderID() {
+    public CartItem() {
+    }
+
+    public Integer getOrderID() {
         return idOrder;
     }
 
-    public void setOrderID(String idOrder) {
+    public void setOrderID(Integer idOrder) {
         this.idOrder = idOrder;
         if (this.productID != null) {
             super.setId(new CompositeKey<>(idOrder, this.productID));

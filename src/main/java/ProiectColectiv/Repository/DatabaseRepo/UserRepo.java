@@ -1,5 +1,6 @@
 package ProiectColectiv.Repository.DatabaseRepo;
 
+import ProiectColectiv.Domain.Address;
 import ProiectColectiv.Domain.User;
 import ProiectColectiv.Repository.Interfaces.IUserRepo;
 import ProiectColectiv.Repository.Utils.JdbcUtils;
@@ -8,7 +9,9 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 
 public class UserRepo implements IUserRepo {
     private final JdbcUtils dbUtils;
@@ -31,6 +34,36 @@ public class UserRepo implements IUserRepo {
         }
     }
 
+    // Helper method to fetch addresses for a user
+    private List<Address> getAddressesForUser(Connection con, String userEmail) {
+        List<Address> addresses = new ArrayList<>();
+        String query = "SELECT * FROM Addresses WHERE userEmail=?";
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setString(1, userEmail);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Address addr = new Address(
+                            rs.getString("id"),
+                            rs.getString("type"),
+                            rs.getString("firstName"),
+                            rs.getString("lastName"),
+                            rs.getString("street"),
+                            rs.getString("city"),
+                            rs.getString("county"),
+                            rs.getString("postalCode"),
+                            rs.getString("country"),
+                            rs.getString("phoneNumber"),
+                            rs.getBoolean("isPrimary")
+                    );
+                    addresses.add(addr);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching addresses: " + e);
+        }
+        return addresses;
+    }
+
     @Override
     public User findById(String id) {
         Connection con = dbUtils.getConnection();
@@ -47,15 +80,16 @@ public class UserRepo implements IUserRepo {
                     String password = rs.getString("password");
                     boolean isAdmin = rs.getBoolean("isAdmin");
                     String authToken = rs.getString("authToken");
-                    String adress = rs.getString("address");
-                    // Timestamp timestampLogin = rs.getTimestamp("lastLogin");
                     String phoneNumber = rs.getString("phoneNumber");
                     LocalDateTime lastLogin = parseLocalDateTime(rs.getString("lastLogin"));
 
                     Date sqlDateCreated = rs.getDate("dateCreated");
                     LocalDate dateCreated = (sqlDateCreated != null) ? sqlDateCreated.toLocalDate() : null;
 
-                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated, phoneNumber);
+                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, dateCreated, phoneNumber);
+
+                    user.setAddresses(getAddressesForUser(con, email));
+
                     return user;
                 }
             }
@@ -65,10 +99,40 @@ public class UserRepo implements IUserRepo {
         return null;
     }
 
+    public void addAddress(String userEmail, Address address) {
+        Connection con = dbUtils.getConnection();
+        String query = "INSERT INTO Addresses(id, userEmail, type, firstName, lastName, street, city, county, postalCode, country, phoneNumber, isPrimary) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+
+        if (address.isPrimary()) {
+            removePrimaryStatus(userEmail);
+        }
+
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            String addrId = (address.getId() == null || address.getId().isEmpty()) ? UUID.randomUUID().toString() : address.getId();
+
+            ps.setString(1, addrId);
+            ps.setString(2, userEmail);
+            ps.setString(3, address.getType());
+            ps.setString(4, address.getFirstName());
+            ps.setString(5, address.getLastName());
+            ps.setString(6, address.getStreet());
+            ps.setString(7, address.getCity());
+            ps.setString(8, address.getCounty());
+            ps.setString(9, address.getPostalCode());
+            ps.setString(10, address.getCountry());
+            ps.setString(11, address.getPhoneNumber());
+            ps.setBoolean(12, address.isPrimary());
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error adding address: " + e.getMessage());
+        }
+    }
+
     @Override
     public void save(User entity) {
         Connection con = dbUtils.getConnection();
-        String query = "INSERT INTO Users(firstName, lastName, email, password, isAdmin, authToken, lastLogin, address, dateCreated, phoneNumber) VALUES (?,?,?,?,?,?,?,?,?,?)";
+        String query = "INSERT INTO Users(firstName, lastName, email, password, isAdmin, authToken, lastLogin, dateCreated, phoneNumber) VALUES (?,?,?,?,?,?,?,?,?)";
 
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, entity.getFirstName());
@@ -84,9 +148,8 @@ public class UserRepo implements IUserRepo {
             else{
                 ps.setObject(7,null);
             }
-            ps.setString(8, entity.getAddress());
-            ps.setDate(9, Date.valueOf(entity.getDateCreated()));
-            ps.setString(10, entity.getPhoneNumber());
+            ps.setDate(8, Date.valueOf(entity.getDateCreated()));
+            ps.setString(9, entity.getPhoneNumber());
 
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -94,10 +157,32 @@ public class UserRepo implements IUserRepo {
         }
     }
 
+    private void removePrimaryStatus(String userEmail) {
+        Connection con = dbUtils.getConnection();
+        String query = "UPDATE Addresses SET isPrimary=0 WHERE userEmail=?";
+        try(PreparedStatement ps = con.prepareStatement(query)){
+            ps.setString(1, userEmail);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error removing primary status: " + e);
+        }
+    }
+
+    public void deleteAddress(String addressId) {
+        Connection con = dbUtils.getConnection();
+        String query = "DELETE FROM Addresses WHERE id=?";
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setString(1, addressId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error deleting address: " + e.getMessage());
+        }
+    }
+
     @Override
     public void update(User entity) {
         Connection con = dbUtils.getConnection();
-        String query = "UPDATE Users SET firstName=?, lastName=?, password=?, isAdmin=?, authToken=?, lastLogin=?, address=?, dateCreated=?, phoneNumber=? WHERE email=?";
+        String query = "UPDATE Users SET firstName=?, lastName=?, password=?, isAdmin=?, authToken=?, lastLogin=?, dateCreated=?, phoneNumber=? WHERE email=?";
 
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, entity.getFirstName());
@@ -105,18 +190,10 @@ public class UserRepo implements IUserRepo {
             ps.setString(3, entity.getPassword());
             ps.setBoolean(4, entity.isAdmin());
             ps.setString(5, entity.getAuthToken());
-            if(entity.getLastLogin() != null) {
-                ps.setObject(7,Timestamp.valueOf(entity.getLastLogin()));
-            }
-            else{
-                ps.setObject(7,null);
-            }
-            ps.setObject(6, entity.getLastLogin());
-            ps.setString(7, entity.getAddress());
-            ps.setDate(8, Date.valueOf(entity.getDateCreated()));
-            ps.setString(10, entity.getEmail());
-            ps.setString(9, entity.getPhoneNumber());
-
+            if(entity.getLastLogin() != null) ps.setObject(6,Timestamp.valueOf(entity.getLastLogin())); else ps.setObject(6,null);
+            ps.setDate(7, Date.valueOf(entity.getDateCreated()));
+            ps.setString(8, entity.getPhoneNumber());
+            ps.setString(9, entity.getEmail());
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Error DB update: " + e.getMessage());
@@ -153,15 +230,16 @@ public class UserRepo implements IUserRepo {
                     String password = rs.getString("password");
                     boolean isAdmin = rs.getBoolean("isAdmin");
                     String authToken = rs.getString("authToken");
-                    String adress = rs.getString("address");
-                    // Timestamp timestampLogin = rs.getTimestamp("lastLogin");
                     String phoneNumber = rs.getString("phoneNumber");
                     LocalDateTime lastLogin = parseLocalDateTime(rs.getString("lastLogin"));
 
                     Date sqlDateCreated = rs.getDate("dateCreated");
                     LocalDate dateCreated = (sqlDateCreated != null) ? sqlDateCreated.toLocalDate() : null;
 
-                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated, phoneNumber);
+                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, dateCreated, phoneNumber);
+
+                    user.setAddresses(getAddressesForUser(con, user.getEmail()));
+
                     return user;
                 }
             }
@@ -198,7 +276,6 @@ public class UserRepo implements IUserRepo {
                     String password = rs.getString("password");
                     boolean isAdmin = rs.getBoolean("isAdmin");
                     String authToken = rs.getString("authToken");
-                    String adress = rs.getString("address");
                     String phoneNumber = rs.getString("phoneNumber");
 
                     Timestamp timestampLogin = rs.getTimestamp("lastLogin");
@@ -207,7 +284,10 @@ public class UserRepo implements IUserRepo {
                     Date sqlDateCreated = rs.getDate("dateCreated");
                     LocalDate dateCreated = (sqlDateCreated != null) ? sqlDateCreated.toLocalDate() : null;
 
-                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated,phoneNumber);
+                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, dateCreated,phoneNumber);
+
+                    user.setAddresses(getAddressesForUser(con, user.getEmail()));
+
                     users.add(user);
                 }
                 return users;
@@ -216,5 +296,28 @@ public class UserRepo implements IUserRepo {
             System.err.println("Error DB getAllUsers: " + e);
         }
         return null;
+    }
+
+    public void updateAddress(Address address) {
+        Connection con = dbUtils.getConnection();
+        String query = "UPDATE Addresses SET type=?, firstName=?, lastName=?, street=?, city=?, county=?, postalCode=?, country=?, phoneNumber=?, isPrimary=? WHERE id=?";
+
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setString(1, address.getType());
+            ps.setString(2, address.getFirstName());
+            ps.setString(3, address.getLastName());
+            ps.setString(4, address.getStreet());
+            ps.setString(5, address.getCity());
+            ps.setString(6, address.getCounty());
+            ps.setString(7, address.getPostalCode());
+            ps.setString(8, address.getCountry());
+            ps.setString(9, address.getPhoneNumber());
+            ps.setBoolean(10, address.isPrimary());
+            ps.setString(11, address.getId());
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error updating address: " + e.getMessage());
+        }
     }
 }
