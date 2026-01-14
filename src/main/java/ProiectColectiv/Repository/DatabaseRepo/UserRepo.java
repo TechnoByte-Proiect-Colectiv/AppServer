@@ -21,16 +21,20 @@ public class UserRepo implements IUserRepo {
     }
 
     private LocalDateTime parseLocalDateTime(String str) {
-        if (str == null) return null;
+        if (str == null || str.isEmpty()) return null;
         try {
             return LocalDateTime.parse(str.replace(" ", "T"));
         } catch (Exception e) {
-            try {
-                long millis = Long.parseLong(str);
-                return LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(millis), java.time.ZoneId.systemDefault());
-            } catch (Exception e2) {
-                return null;
-            }
+            return null;
+        }
+    }
+
+    private LocalDate parseLocalDate(String str) {
+        if (str == null || str.isEmpty()) return null;
+        try {
+            return LocalDate.parse(str);
+        } catch (Exception e) {
+            return null;
         }
     }
 

@@ -10,10 +10,12 @@ import at.favre.lib.crypto.bcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -139,8 +141,19 @@ public class UserController {
 
         user.setPassword(BCrypt.withDefaults().hashToString(12, user.getPassword().toCharArray()));
         user.setDateCreated(LocalDate.now());
+        user.setLastLogin(LocalDateTime.now());
+
+        // Generare token imediat
+        String token = jwtUtils.generateToken(user.getEmail(), user.isAdmin());
+        user.setAuthToken(token);
+
         userRepo.save(user);
-        return new ResponseEntity<>(user, HttpStatus.CREATED);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", token);
+        response.put("user", user);
+
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/changePassword")
