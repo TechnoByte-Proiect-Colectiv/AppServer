@@ -18,16 +18,20 @@ public class UserRepo implements IUserRepo {
     }
 
     private LocalDateTime parseLocalDateTime(String str) {
-        if (str == null) return null;
+        if (str == null || str.isEmpty()) return null;
         try {
             return LocalDateTime.parse(str.replace(" ", "T"));
         } catch (Exception e) {
-            try {
-                long millis = Long.parseLong(str);
-                return LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(millis), java.time.ZoneId.systemDefault());
-            } catch (Exception e2) {
-                return null;
-            }
+            return null;
+        }
+    }
+
+    private LocalDate parseLocalDate(String str) {
+        if (str == null || str.isEmpty()) return null;
+        try {
+            return LocalDate.parse(str);
+        } catch (Exception e) {
+            return null;
         }
     }
 
@@ -35,28 +39,11 @@ public class UserRepo implements IUserRepo {
     public User findById(String id) {
         Connection con = dbUtils.getConnection();
         String query = "SELECT * FROM Users WHERE email=?";
-
         try (PreparedStatement preStmt = con.prepareStatement(query)) {
             preStmt.setString(1, id);
-
             try (ResultSet rs = preStmt.executeQuery()) {
                 if (rs.next()) {
-                    String firstName = rs.getString("firstName");
-                    String lastName = rs.getString("lastName");
-                    String email = rs.getString("email");
-                    String password = rs.getString("password");
-                    boolean isAdmin = rs.getBoolean("isAdmin");
-                    String authToken = rs.getString("authToken");
-                    String adress = rs.getString("address");
-                    // Timestamp timestampLogin = rs.getTimestamp("lastLogin");
-                    String phoneNumber = rs.getString("phoneNumber");
-                    LocalDateTime lastLogin = parseLocalDateTime(rs.getString("lastLogin"));
-
-                    Date sqlDateCreated = rs.getDate("dateCreated");
-                    LocalDate dateCreated = (sqlDateCreated != null) ? sqlDateCreated.toLocalDate() : null;
-
-                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated, phoneNumber);
-                    return user;
+                    return extractUserFromResultSet(rs);
                 }
             }
         } catch (SQLException e) {
@@ -69,7 +56,6 @@ public class UserRepo implements IUserRepo {
     public void save(User entity) {
         Connection con = dbUtils.getConnection();
         String query = "INSERT INTO Users(firstName, lastName, email, password, isAdmin, authToken, lastLogin, address, dateCreated, phoneNumber) VALUES (?,?,?,?,?,?,?,?,?,?)";
-
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, entity.getFirstName());
             ps.setString(2, entity.getLastName());
@@ -77,17 +63,10 @@ public class UserRepo implements IUserRepo {
             ps.setString(4, entity.getPassword());
             ps.setBoolean(5, entity.isAdmin());
             ps.setString(6, entity.getAuthToken());
-
-            if(entity.getLastLogin() != null) {
-                ps.setObject(7,Timestamp.valueOf(entity.getLastLogin()));
-            }
-            else{
-                ps.setObject(7,null);
-            }
+            ps.setString(7, entity.getLastLogin() != null ? entity.getLastLogin().toString() : null);
             ps.setString(8, entity.getAddress());
-            ps.setDate(9, Date.valueOf(entity.getDateCreated()));
+            ps.setString(9, entity.getDateCreated() != null ? entity.getDateCreated().toString() : LocalDate.now().toString());
             ps.setString(10, entity.getPhoneNumber());
-
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Error DB save: " + e.getMessage());
@@ -98,42 +77,77 @@ public class UserRepo implements IUserRepo {
     public void update(User entity) {
         Connection con = dbUtils.getConnection();
         String query = "UPDATE Users SET firstName=?, lastName=?, password=?, isAdmin=?, authToken=?, lastLogin=?, address=?, dateCreated=?, phoneNumber=? WHERE email=?";
-
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, entity.getFirstName());
             ps.setString(2, entity.getLastName());
             ps.setString(3, entity.getPassword());
             ps.setBoolean(4, entity.isAdmin());
             ps.setString(5, entity.getAuthToken());
-            if(entity.getLastLogin() != null) {
-                ps.setObject(7,Timestamp.valueOf(entity.getLastLogin()));
-            }
-            else{
-                ps.setObject(7,null);
-            }
-            ps.setObject(6, entity.getLastLogin());
+            ps.setString(6, entity.getLastLogin() != null ? entity.getLastLogin().toString() : null);
             ps.setString(7, entity.getAddress());
-            ps.setDate(8, Date.valueOf(entity.getDateCreated()));
-            ps.setString(10, entity.getEmail());
+            ps.setString(8, entity.getDateCreated() != null ? entity.getDateCreated().toString() : null);
             ps.setString(9, entity.getPhoneNumber());
-
+            ps.setString(10, entity.getEmail()); // Pentru clauza WHERE
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Error DB update: " + e.getMessage());
         }
     }
 
+    @Override
+    public void delete(String id) {
+        Connection con = dbUtils.getConnection();
+        String query = "DELETE FROM Users WHERE email=?";
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setString(1, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error DB delete: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Iterable<User> getAllUsers() {
+        Connection con = dbUtils.getConnection();
+        String query = "SELECT * FROM Users";
+        ArrayList<User> users = new ArrayList<>();
+        try (PreparedStatement preStmt = con.prepareStatement(query);
+             ResultSet rs = preStmt.executeQuery()) {
+            while (rs.next()) {
+                users.add(extractUserFromResultSet(rs));
+            }
+            return users;
+        } catch (SQLException e) {
+            System.err.println("Error DB getAllUsers: " + e);
+        }
+        return users;
+    }
+
+    private User extractUserFromResultSet(ResultSet rs) throws SQLException {
+        return new User(
+                rs.getString("firstName"),
+                rs.getString("lastName"),
+                rs.getString("email"),
+                rs.getString("password"),
+                rs.getBoolean("isAdmin"),
+                rs.getString("authToken"),
+                parseLocalDateTime(rs.getString("lastLogin")),
+                rs.getString("address"),
+                parseLocalDate(rs.getString("dateCreated")),
+                rs.getString("phoneNumber")
+        );
+    }
+
+    @Override
     public void updatePassword(User entity) {
         Connection con = dbUtils.getConnection();
         String query = "UPDATE Users SET password=? WHERE email=?";
-
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, entity.getPassword());
             ps.setString(2, entity.getEmail());
-
             ps.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("Error DB update: " + e.getMessage());
+            System.err.println("Error DB updatePassword: " + e.getMessage());
         }
     }
 
@@ -170,51 +184,7 @@ public class UserRepo implements IUserRepo {
         }
         return null;
     }
-
-    @Override
-    public void delete(String id) {
-        Connection con = dbUtils.getConnection();
-        String query = "DELETE FROM Users WHERE email=?";
-
-        try (PreparedStatement ps = con.prepareStatement(query)) {
-            ps.setString(1, id);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            System.err.println("Error DB delete: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public Iterable<User> getAllUsers() {
-        Connection con = dbUtils.getConnection();
-        String query = "SELECT * FROM Users";
-        ArrayList<User> users = new ArrayList<>();
-        try (PreparedStatement preStmt = con.prepareStatement(query)) {
-            try (ResultSet rs = preStmt.executeQuery()) {
-                while (rs.next()) {
-                    String firstName = rs.getString("firstName");
-                    String lastName = rs.getString("lastName");
-                    String email = rs.getString("email");
-                    String password = rs.getString("password");
-                    boolean isAdmin = rs.getBoolean("isAdmin");
-                    String authToken = rs.getString("authToken");
-                    String adress = rs.getString("address");
-                    String phoneNumber = rs.getString("phoneNumber");
-
-                    Timestamp timestampLogin = rs.getTimestamp("lastLogin");
-                    LocalDateTime lastLogin = (timestampLogin != null) ? timestampLogin.toLocalDateTime() : null;
-
-                    Date sqlDateCreated = rs.getDate("dateCreated");
-                    LocalDate dateCreated = (sqlDateCreated != null) ? sqlDateCreated.toLocalDate() : null;
-
-                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated,phoneNumber);
-                    users.add(user);
-                }
-                return users;
-            }
-        } catch (SQLException e) {
-            System.err.println("Error DB getAllUsers: " + e);
-        }
-        return null;
-    }
 }
+
+
+
