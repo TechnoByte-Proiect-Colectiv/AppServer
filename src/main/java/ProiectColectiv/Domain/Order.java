@@ -1,20 +1,32 @@
 package ProiectColectiv.Domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDate;
 
-public class Order extends Entity<String>{
+public class Order extends Entity<String> {
+
     private LocalDate orderDate;      // created at
+
     private Float totalProducts;
     private Float totalShipping;
     private Float totalPrice;
+
+    private String currency;          // RON, EUR, USD, etc.
+
     private String paymentMethod;
     private Boolean paymentStatus;
     private String deliveryStatus;    // order status
-    private String address;
+
+    // Campuri pentru adrese
+    private String billingAddress;
+    private String shippingAddress;
+
+    public Order() {}
 
     public Order(String userID, LocalDate orderDate,
-                 Float totalProducts, Float totalShipping, Float totalPrice,
-                 String paymentMethod, Boolean paymentStatus, String deliveryStatus, String address) {
+                 Float totalProducts, Float totalShipping, Float totalPrice, String currency,
+                 String paymentMethod, Boolean paymentStatus, String deliveryStatus,
+                 String billingAddress, String shippingAddress) {
 
         super.setId(userID);
 
@@ -22,20 +34,22 @@ public class Order extends Entity<String>{
         this.totalProducts = totalProducts;
         this.totalShipping = totalShipping;
         this.totalPrice = totalPrice;
+        this.currency = currency;
         this.paymentMethod = paymentMethod;
         this.paymentStatus = paymentStatus;
         this.deliveryStatus = deliveryStatus;
-        this.address = address;
+        this.billingAddress = billingAddress;
+        this.shippingAddress = shippingAddress;
     }
 
-    public Order() {}
+    // --- Getters si Setters ---
 
     public String getUserID() {
         return getId();
     }
 
     public void setUserID(String userID) {
-         setId(userID);
+        setId(userID);
     }
 
     public LocalDate getOrderDate() {
@@ -70,6 +84,14 @@ public class Order extends Entity<String>{
         this.totalPrice = totalPrice;
     }
 
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
     public String getPaymentMethod() {
         return paymentMethod;
     }
@@ -94,11 +116,19 @@ public class Order extends Entity<String>{
         this.deliveryStatus = deliveryStatus;
     }
 
-    public String getAddress() {
-        return address;
+    public String getBillingAddress() {
+        return billingAddress;
     }
 
-    public void setAddress(String address) {
-        this.address = address;
+    public void setBillingAddress(String billingAddress) {
+        this.billingAddress = billingAddress;
+    }
+
+    public String getShippingAddress() {
+        return shippingAddress;
+    }
+
+    public void setShippingAddress(String shippingAddress) {
+        this.shippingAddress = shippingAddress;
     }
 }
