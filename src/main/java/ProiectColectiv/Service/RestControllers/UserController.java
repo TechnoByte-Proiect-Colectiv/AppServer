@@ -57,7 +57,7 @@ public class UserController {
             // PASUL 3: Returnam token-ul intr-un format JSON frumos
             Map<String, String> response = new HashMap<>();
             response.put("token", token);
-            response.put("email", repoUser.getEmail());
+            response.put("user", repoUser.getEmail()); // se trimite userul sub forma mailului (id-ul)
 
             return new ResponseEntity<>(response, HttpStatus.OK);
         } else {
