@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,15 +21,10 @@ import java.util.Map;
 @RequestMapping("/api/user")
 public class UserController {
 
-    private final IUserRepo userRepo;
-    private final JWTUtils jwtUtils;
-
-    // Folosim constructor injection (este "best practice" in Spring Boot modern)
     @Autowired
-    public UserController(IUserRepo userRepo, JWTUtils jwtUtils) {
-        this.userRepo = userRepo;
-        this.jwtUtils = jwtUtils;
-    }
+    private IUserRepo userRepo;
+    @Autowired
+    private JWTUtils jwtUtils;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
@@ -72,6 +68,7 @@ public class UserController {
         }
 
         user.setPassword(BCrypt.withDefaults().hashToString(12, user.getPassword().toCharArray()));
+        user.setDateCreated(LocalDate.now());
         userRepo.save(user);
         return new ResponseEntity<>(user, HttpStatus.CREATED);
     }

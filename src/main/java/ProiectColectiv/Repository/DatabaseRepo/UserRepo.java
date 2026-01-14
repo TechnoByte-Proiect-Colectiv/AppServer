@@ -63,7 +63,12 @@ public class UserRepo implements IUserRepo {
             ps.setBoolean(5, entity.isAdmin());
             ps.setString(6, entity.getAuthToken());
 
-            ps.setObject(7, entity.getLastLogin());
+            if(entity.getLastLogin() != null) {
+                ps.setObject(7,Timestamp.valueOf(entity.getLastLogin()));
+            }
+            else{
+                ps.setObject(7,null);
+            }
             ps.setString(8, entity.getAddress());
             ps.setDate(9, Date.valueOf(entity.getDateCreated()));
 
@@ -84,6 +89,12 @@ public class UserRepo implements IUserRepo {
             ps.setString(3, entity.getPassword());
             ps.setBoolean(4, entity.isAdmin());
             ps.setString(5, entity.getAuthToken());
+            if(entity.getLastLogin() != null) {
+                ps.setObject(7,Timestamp.valueOf(entity.getLastLogin()));
+            }
+            else{
+                ps.setObject(7,null);
+            }
             ps.setObject(6, entity.getLastLogin());
             ps.setString(7, entity.getAddress());
             ps.setDate(8, Date.valueOf(entity.getDateCreated()));
