@@ -15,7 +15,7 @@ public class OrderController {
     private IOrderRepo orderRepo;
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<?> getOrderById(@PathVariable String orderId) {
+    public ResponseEntity<?> getOrderById(@PathVariable Integer orderId) {
         return new ResponseEntity<>(orderRepo.findById(orderId), HttpStatus.OK);
     }
 

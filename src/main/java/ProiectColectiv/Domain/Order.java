@@ -3,7 +3,9 @@ package ProiectColectiv.Domain;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDate;
 
-public class Order extends Entity<String> {
+public class Order extends Entity<Integer> {
+
+    private String idUser;
 
     private LocalDate orderDate;      // created at
 
@@ -23,13 +25,13 @@ public class Order extends Entity<String> {
 
     public Order() {}
 
-    public Order(String userID, LocalDate orderDate,
+    public Order(Integer orderId, String userID, LocalDate orderDate,
                  Float totalProducts, Float totalShipping, Float totalPrice, String currency,
                  String paymentMethod, Boolean paymentStatus, String deliveryStatus,
                  String billingAddress, String shippingAddress) {
 
-        super.setId(userID);
-
+        super.setId(orderId);
+        this.idUser = userID;
         this.orderDate = orderDate;
         this.totalProducts = totalProducts;
         this.totalShipping = totalShipping;
@@ -44,12 +46,16 @@ public class Order extends Entity<String> {
 
     // --- Getters si Setters ---
 
+    public Integer getId() { return getId(); }
+
+    public void setId(Integer orderId) { setId(orderId); }
+
     public String getUserID() {
-        return getId();
+        return getUserID();
     }
 
     public void setUserID(String userID) {
-        setId(userID);
+        this.idUser = userID;
     }
 
     public LocalDate getOrderDate() {
