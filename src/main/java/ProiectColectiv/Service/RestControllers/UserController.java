@@ -10,8 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,7 +23,6 @@ public class UserController {
     private final IUserRepo userRepo;
     private final JWTUtils jwtUtils;
 
-    // Folosim constructor injection (este "best practice" in Spring Boot modern)
     @Autowired
     public UserController(IUserRepo userRepo, JWTUtils jwtUtils) {
         this.userRepo = userRepo;
@@ -38,26 +37,17 @@ public class UserController {
             return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
         }
 
-        // Verificam parola
         if (BCrypt.verifyer().verify(loginRequest.getPassword().toCharArray(), repoUser.getPassword()).verified) {
 
-            // PASUL 1: Generam Token-ul JWT folosind Utils
-            // Aici presupunem ca userul nu e admin (false).
-            // Daca ai un camp isAdmin in User, foloseste: repoUser.isAdmin()
-            String token = jwtUtils.generateToken(repoUser.getEmail(), false);
-
-            // PASUL 2: Actualizam doar data logarii
-            // NOTA: La JWT nu e obligatoriu sa salvezi token-ul in baza de date (stateless).
-            // Daca vrei totusi sa il salvezi pentru o verificare extra, poti lasa linia cu setAuthToken.
-            // repoUser.setAuthToken(token); <--- O poti scoate daca vrei full stateless
+            String token = jwtUtils.generateToken(repoUser.getEmail(), repoUser.isAdmin());
 
             repoUser.setLastLogin(LocalDateTime.now());
             userRepo.update(repoUser);
 
-            // PASUL 3: Returnam token-ul intr-un format JSON frumos
-            Map<String, String> response = new HashMap<>();
+            Map<String, Object> response = new HashMap<>();
             response.put("token", token);
-            response.put("user", repoUser.getEmail()); // se trimite userul sub forma mailului (id-ul)
+            response.put("email", repoUser.getEmail());
+            response.put("isAdmin", repoUser.isAdmin());
 
             return new ResponseEntity<>(response, HttpStatus.OK);
         } else {
@@ -72,8 +62,17 @@ public class UserController {
         }
 
         user.setPassword(BCrypt.withDefaults().hashToString(12, user.getPassword().toCharArray()));
+        user.setDateCreated(LocalDate.now());
+        user.setLastLogin(LocalDateTime.now());
+
+        String token = jwtUtils.generateToken(user.getEmail(), user.isAdmin());
         userRepo.save(user);
-        return new ResponseEntity<>(user, HttpStatus.CREATED);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", token);
+        response.put("user", user);
+
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/changePassword")
@@ -93,12 +92,14 @@ public class UserController {
         User existingUser = userRepo.findById(id);
         if (existingUser == null) return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
 
-        // Actualizezi câmpurile (exemplu)
         existingUser.setFirstName(updatedUser.getFirstName());
         existingUser.setLastName(updatedUser.getLastName());
         existingUser.setAdress(updatedUser.getAddress());
+        existingUser.setPhoneNumber(updatedUser.getPhoneNumber());
 
-        if(updatedUser.getPassword() != null) existingUser.setPassword(updatedUser.getPassword());
+        if(updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
+            existingUser.setPassword(BCrypt.withDefaults().hashToString(12, updatedUser.getPassword().toCharArray()));
+        }
 
         userRepo.update(existingUser);
         return new ResponseEntity<>(existingUser, HttpStatus.OK);
