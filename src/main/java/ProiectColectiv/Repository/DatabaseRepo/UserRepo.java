@@ -17,6 +17,20 @@ public class UserRepo implements IUserRepo {
         dbUtils = new JdbcUtils(props);
     }
 
+    private LocalDateTime parseLocalDateTime(String str) {
+        if (str == null) return null;
+        try {
+            return LocalDateTime.parse(str.replace(" ", "T"));
+        } catch (Exception e) {
+            try {
+                long millis = Long.parseLong(str);
+                return LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(millis), java.time.ZoneId.systemDefault());
+            } catch (Exception e2) {
+                return null;
+            }
+        }
+    }
+
     @Override
     public User findById(String id) {
         Connection con = dbUtils.getConnection();
@@ -34,13 +48,14 @@ public class UserRepo implements IUserRepo {
                     boolean isAdmin = rs.getBoolean("isAdmin");
                     String authToken = rs.getString("authToken");
                     String adress = rs.getString("address");
-                    Timestamp timestampLogin = rs.getTimestamp("lastLogin");
-                    LocalDateTime lastLogin = (timestampLogin != null) ? timestampLogin.toLocalDateTime() : null;
+                    // Timestamp timestampLogin = rs.getTimestamp("lastLogin");
+                    String phoneNumber = rs.getString("phoneNumber");
+                    LocalDateTime lastLogin = parseLocalDateTime(rs.getString("lastLogin"));
 
                     Date sqlDateCreated = rs.getDate("dateCreated");
                     LocalDate dateCreated = (sqlDateCreated != null) ? sqlDateCreated.toLocalDate() : null;
 
-                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated);
+                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated, phoneNumber);
                     return user;
                 }
             }
@@ -53,7 +68,7 @@ public class UserRepo implements IUserRepo {
     @Override
     public void save(User entity) {
         Connection con = dbUtils.getConnection();
-        String query = "INSERT INTO Users(firstName, lastName, email, password, isAdmin, authToken, lastLogin, address, dateCreated) VALUES (?,?,?,?,?,?,?,?,?)";
+        String query = "INSERT INTO Users(firstName, lastName, email, password, isAdmin, authToken, lastLogin, address, dateCreated, phoneNumber) VALUES (?,?,?,?,?,?,?,?,?,?)";
 
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, entity.getFirstName());
@@ -63,9 +78,15 @@ public class UserRepo implements IUserRepo {
             ps.setBoolean(5, entity.isAdmin());
             ps.setString(6, entity.getAuthToken());
 
-            ps.setObject(7, entity.getLastLogin());
+            if(entity.getLastLogin() != null) {
+                ps.setObject(7,Timestamp.valueOf(entity.getLastLogin()));
+            }
+            else{
+                ps.setObject(7,null);
+            }
             ps.setString(8, entity.getAddress());
             ps.setDate(9, Date.valueOf(entity.getDateCreated()));
+            ps.setString(10, entity.getPhoneNumber());
 
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -76,7 +97,7 @@ public class UserRepo implements IUserRepo {
     @Override
     public void update(User entity) {
         Connection con = dbUtils.getConnection();
-        String query = "UPDATE Users SET firstName=?, lastName=?, password=?, isAdmin=?, authToken=?, lastLogin=?, address=?, dateCreated=? WHERE email=?";
+        String query = "UPDATE Users SET firstName=?, lastName=?, password=?, isAdmin=?, authToken=?, lastLogin=?, address=?, dateCreated=?, phoneNumber=? WHERE email=?";
 
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, entity.getFirstName());
@@ -84,10 +105,17 @@ public class UserRepo implements IUserRepo {
             ps.setString(3, entity.getPassword());
             ps.setBoolean(4, entity.isAdmin());
             ps.setString(5, entity.getAuthToken());
+            if(entity.getLastLogin() != null) {
+                ps.setObject(7,Timestamp.valueOf(entity.getLastLogin()));
+            }
+            else{
+                ps.setObject(7,null);
+            }
             ps.setObject(6, entity.getLastLogin());
             ps.setString(7, entity.getAddress());
             ps.setDate(8, Date.valueOf(entity.getDateCreated()));
-            ps.setString(9, entity.getEmail());
+            ps.setString(10, entity.getEmail());
+            ps.setString(9, entity.getPhoneNumber());
 
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -107,6 +135,40 @@ public class UserRepo implements IUserRepo {
         } catch (SQLException e) {
             System.err.println("Error DB update: " + e.getMessage());
         }
+    }
+
+    @Override
+    public User findByToken(String token) {
+        Connection con = dbUtils.getConnection();
+        String query = "SELECT * FROM Users WHERE authToken=?";
+
+        try (PreparedStatement preStmt = con.prepareStatement(query)) {
+            preStmt.setString(1, token);
+
+            try (ResultSet rs = preStmt.executeQuery()) {
+                if (rs.next()) {
+                    String firstName = rs.getString("firstName");
+                    String lastName = rs.getString("lastName");
+                    String email = rs.getString("email");
+                    String password = rs.getString("password");
+                    boolean isAdmin = rs.getBoolean("isAdmin");
+                    String authToken = rs.getString("authToken");
+                    String adress = rs.getString("address");
+                    // Timestamp timestampLogin = rs.getTimestamp("lastLogin");
+                    String phoneNumber = rs.getString("phoneNumber");
+                    LocalDateTime lastLogin = parseLocalDateTime(rs.getString("lastLogin"));
+
+                    Date sqlDateCreated = rs.getDate("dateCreated");
+                    LocalDate dateCreated = (sqlDateCreated != null) ? sqlDateCreated.toLocalDate() : null;
+
+                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated, phoneNumber);
+                    return user;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error DB findByToken: " + e);
+        }
+        return null;
     }
 
     @Override
@@ -137,6 +199,7 @@ public class UserRepo implements IUserRepo {
                     boolean isAdmin = rs.getBoolean("isAdmin");
                     String authToken = rs.getString("authToken");
                     String adress = rs.getString("address");
+                    String phoneNumber = rs.getString("phoneNumber");
 
                     Timestamp timestampLogin = rs.getTimestamp("lastLogin");
                     LocalDateTime lastLogin = (timestampLogin != null) ? timestampLogin.toLocalDateTime() : null;
@@ -144,7 +207,7 @@ public class UserRepo implements IUserRepo {
                     Date sqlDateCreated = rs.getDate("dateCreated");
                     LocalDate dateCreated = (sqlDateCreated != null) ? sqlDateCreated.toLocalDate() : null;
 
-                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated);
+                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated,phoneNumber);
                     users.add(user);
                 }
                 return users;

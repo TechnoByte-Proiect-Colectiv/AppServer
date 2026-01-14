@@ -44,6 +44,8 @@ create table Sellers
     description varchar
 );
 
+DROP TABLE IF EXISTS Users;
+
 create table Users
 (
     email       varchar not null
@@ -53,27 +55,32 @@ create table Users
     isAdmin     boolean,
     authToken   integer,
     lastLogin   datetime,
-    address     varchar not null,
-    dateCreated date    not null,
+    address     varchar,
+    dateCreated date not null,
     firstName   varchar,
-    lastName    varchar
+    lastName    varchar,
+    phoneNumber varchar
 );
+
+DROP TABLE IF EXISTS Orders;
 
 create table Orders
 (
-    idUser         varchar not null
+    idUser          varchar not null
         constraint Orders_pk
             primary key
         constraint Orders_Users_email_fk
             references Users (email),
-    orderDate      date,
-    deliveryStatus varchar,
-    totalProducts  float,
-    totalShipping  float,
-    totalPrice     float,
-    paymentMethod  varchar,
-    paymentStatus  boolean,
-    address        varchar
+    orderDate       date,
+    deliveryStatus  varchar,
+    totalProducts   float,
+    totalShipping   float,
+    totalPrice      float,
+    currency        varchar,
+    paymentMethod   varchar,
+    paymentStatus   boolean,
+    billingAddress  varchar,
+    shippingAddress varchar
 );
 
 

@@ -100,4 +100,23 @@ public class ReviewRepo implements IReviewRepo {
         }
         return null;
     }
+
+    @Override
+    public Iterable<Review> findAllForUser(String userId) {
+        ArrayList<Review> reviews = new ArrayList<>();
+        Connection con = dbUtils.getConnection();
+        try (PreparedStatement preStmt = con.prepareStatement("SELECT * FROM Reviews WHERE idUser = ?")) {
+            preStmt.setString(1, userId);
+            try (ResultSet rs = preStmt.executeQuery()) {
+                while (rs.next()) {
+                    Review review = extractReviewFromResultSet(rs);
+                    reviews.add(review);
+                }
+                return reviews;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error DB findAllForUser: " + e);
+        }
+        return null;
+    }
 }

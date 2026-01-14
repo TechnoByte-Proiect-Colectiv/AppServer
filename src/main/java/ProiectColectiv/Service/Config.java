@@ -1,6 +1,7 @@
 package ProiectColectiv.Service;
 
 import ProiectColectiv.Repository.DatabaseRepo.*;
+import ProiectColectiv.Repository.Utils.JWTUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -45,5 +46,10 @@ public class Config {
     @Bean
     ReviewRepo reviewRepo() {
         return new ReviewRepo(getProps());
+    }
+
+    @Bean
+    JWTUtils jwtUtils() {
+        return new JWTUtils();
     }
 }
