@@ -45,9 +45,9 @@ public class UserController {
             repoUser.setLastLogin(LocalDateTime.now());
             userRepo.update(repoUser);
 
-            Map<String, String> response = new HashMap<>();
+            Map<String, Object> response = new HashMap<>();
             response.put("token", token);
-            response.put("user", repoUser.getEmail());
+            response.put("user", repoUser);
 
             return new ResponseEntity<>(response, HttpStatus.OK);
         } else {
