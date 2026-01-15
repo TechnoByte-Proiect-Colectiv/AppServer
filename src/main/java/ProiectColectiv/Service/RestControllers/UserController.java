@@ -39,7 +39,7 @@ public class UserController {
 
         if (BCrypt.verifyer().verify(loginRequest.getPassword().toCharArray(), repoUser.getPassword()).verified) {
 
-            String token = jwtUtils.generateToken(repoUser.getEmail(), false);
+            String token = jwtUtils.generateToken(repoUser.getEmail(), repoUser.isAdmin());
 
             repoUser.setAuthToken(token);
             repoUser.setLastLogin(LocalDateTime.now());

@@ -1,5 +1,7 @@
 package ProiectColectiv.Domain;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -65,10 +67,12 @@ public class User extends Entity<String> {
         this.password = password;
     }
 
+    @JsonProperty("isAdmin")
     public boolean isAdmin() {
         return isAdmin;
     }
 
+    @JsonProperty("isAdmin")
     public void setAdmin(boolean admin) {
         isAdmin = admin;
     }
