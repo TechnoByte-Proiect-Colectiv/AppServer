@@ -37,6 +37,7 @@ public class ReviewController {
             }
 
             String email = jwtUtils.extractEmail(jwt);
+            review.setUserId(email);
 
             if (review.getCreated_at() == null) {
                 review.setCreated_at(LocalDate.now());
