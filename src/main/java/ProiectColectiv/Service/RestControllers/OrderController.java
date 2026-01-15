@@ -158,6 +158,14 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<?> addOrder(@RequestHeader("Authorization") String authHeader, @RequestBody OrderRequestDTO orderRequest) {
         try {
+            for (OrderItemDTO item : orderRequest.getItems()) {
+                Product p = productRepo.findById(item.getProductId());
+                if (p == null || p.getQuantity() < item.getQuantity()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body("Not enough stock for: " + (p != null ? p.getName() : "Unknown"));
+                }
+            }
+
             String token = authHeader.replace("Bearer ", "");
             if (!jwtUtils.validateToken(token)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Token");
@@ -193,6 +201,8 @@ public class OrderController {
                     cartItem.setNrOrdered(itemDTO.getQuantity());
 
                     cartItemRepo.save(cartItem);
+
+                    productRepo.updateStock(itemDTO.getProductId(), itemDTO.getQuantity());
                 }
             }
 

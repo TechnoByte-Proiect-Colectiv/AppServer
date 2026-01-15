@@ -273,4 +273,20 @@ public class ProductRepo implements IProductRepo {
 
         return product;
     }
+
+    @Override
+    public void updateStock(Integer productId, Integer quantitySold) {
+        Connection con = dbUtils.getConnection();
+        String query = "UPDATE Products SET nrItems = nrItems - ?, nrSold = nrSold + ? WHERE id = ?";
+
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setInt(1, quantitySold);
+            ps.setInt(2, quantitySold);
+            ps.setInt(3, productId);
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error updating stock: " + e.getMessage());
+        }
+    }
 }

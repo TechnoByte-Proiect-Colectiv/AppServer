@@ -12,9 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 @Component
 public class DataLoader implements CommandLineRunner {
@@ -26,6 +24,7 @@ public class DataLoader implements CommandLineRunner {
     private IReviewRepo reviewRepository;
 
     private final Random random = new Random();
+    String[] availableCategories = { "electronics", "sports", "home-garden", "fashion" };
 
     @Override
     public void run(String... args) throws Exception {
@@ -51,10 +50,28 @@ public class DataLoader implements CommandLineRunner {
     private void generateRandomReviews(Integer productId) {
         int numberOfReviews = random.nextInt(6) + 1; // 1–6 reviews
 
-        for (int i = 0; i < numberOfReviews; i++) {
-            String userId = "user" + random.nextInt(20) + "@test.com"; // TU modifici
-            int rating = random.nextInt(5) + 1;
+        // 🔥 Folosim un Set pentru a ține minte userii care au dat deja review la ACEST produs
+        Set<String> usedUserIds = new HashSet<>();
 
+        for (int i = 0; i < numberOfReviews; i++) {
+            String userId;
+
+            // Generăm un user random până găsim unul care nu a dat review încă
+            // (Facem asta ca să evităm eroarea UNIQUE constraint)
+            int attempts = 0;
+            do {
+                userId = "user" + random.nextInt(20) + "@test.com";
+                attempts++;
+            } while (usedUserIds.contains(userId) && attempts < 50);
+
+            // Dacă după 50 de încercări tot n-am găsit un user unic, sărim peste tura asta
+            if (usedUserIds.contains(userId)) {
+                continue;
+            }
+
+            usedUserIds.add(userId); // Marcăm userul ca folosit
+
+            int rating = random.nextInt(5) + 1;
             String title = REVIEW_TITLES[random.nextInt(REVIEW_TITLES.length)];
             String description = REVIEW_DESCRIPTIONS[random.nextInt(REVIEW_DESCRIPTIONS.length)];
 
@@ -68,7 +85,12 @@ public class DataLoader implements CommandLineRunner {
                     random.nextBoolean()
             );
 
-            reviewRepository.save(review);
+            // Opțional: Poți pune un try-catch aici doar pentru siguranță maximă
+            try {
+                reviewRepository.save(review);
+            } catch (Exception e) {
+                System.out.println("Duplicate review skipped: " + e.getMessage());
+            }
         }
     }
 
@@ -87,7 +109,7 @@ public class DataLoader implements CommandLineRunner {
                     random.nextInt(100) + 1,
                     "RON",
                     random.nextInt(500),
-                    "Category " + random.nextInt(5),
+                    availableCategories[random.nextInt(availableCategories.length)],
                     downloadRandomImage()
             );
 
