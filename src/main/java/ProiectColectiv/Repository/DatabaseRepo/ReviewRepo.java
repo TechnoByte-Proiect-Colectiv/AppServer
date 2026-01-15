@@ -20,52 +20,68 @@ public class ReviewRepo implements IReviewRepo {
     }
 
     @Override
-    public Review findById(CompositeKey<Integer, String> integerStringCompositeKey) {
+    public Review findById(CompositeKey<Integer, String> key) {
         Connection con = dbUtils.getConnection();
-        String query = "SELECT * FROM Orders WHERE idUser = ? and idProduct = ?";
-
+        String query = "SELECT * FROM Reviews WHERE idUser = ? AND idProduct = ?";
         try (PreparedStatement preStmt = con.prepareStatement(query)) {
-            preStmt.setString(1, integerStringCompositeKey.key2());
-            preStmt.setInt(2, integerStringCompositeKey.key1());
-
+            preStmt.setString(1, key.key2());
+            preStmt.setInt(2, key.key1());
             try (ResultSet rs = preStmt.executeQuery()) {
-                if (rs.next()) {
-                    return extractReviewFromResultSet(rs);
-                }
+                if (rs.next()) return extractReviewFromResultSet(rs);
             }
-        } catch (SQLException e) {
-            System.err.println("Error DB findById Order: " + e);
-        }
+        } catch (SQLException e) { System.err.println(e); }
         return null;
     }
 
     @Override
     public void save(Review entity) {
         Connection conn = dbUtils.getConnection();
-        try (PreparedStatement ps = conn.prepareStatement("INSERT INTO Reviews(idProduct,idUser,rating,title,description,createdAt,verifiedPurchase) VALUES " +
-                "(?,?,?,?,?,?,?)")){
-            ps.setInt(1,entity.getId().key1());
-            ps.setString(2,entity.getId().key2());
-            ps.setInt(3,entity.getRating());
-            ps.setString(4,entity.getTitle());
-            ps.setString(5,entity.getDescription());
-            ps.setObject(6, Date.valueOf(entity.getCreated_at()));
-            ps.setBoolean(7,entity.getVerifiedPurchase());
-            ps.executeUpdate();
+        try (PreparedStatement ps = conn.prepareStatement("INSERT INTO Reviews(idProduct,idUser,rating,title,description,createdAt,verifiedPurchase) VALUES (?,?,?,?,?,?,?)")){
+            ps.setInt(1, entity.getId().key1());
+            ps.setString(2, entity.getId().key2());
+            ps.setInt(3, entity.getRating());
+            ps.setString(4, entity.getTitle());
+            ps.setString(5, entity.getDescription());
 
+            LocalDate date = (entity.getCreated_at() != null) ? entity.getCreated_at() : LocalDate.now();
+            ps.setDate(6, Date.valueOf(date));
+
+            ps.setBoolean(7, entity.getVerifiedPurchase() != null ? entity.getVerifiedPurchase() : false);
+            ps.executeUpdate();
         } catch (SQLException e){
-            System.err.println(e.getMessage());
+            System.err.println("SQL Error: " + e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
     @Override
     public void update(Review entity) {
-
+        Connection conn = dbUtils.getConnection();
+        String query = "UPDATE Reviews SET rating = ?, title = ?, description = ?, verifiedPurchase = ? WHERE idProduct = ? AND idUser = ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, entity.getRating());
+            ps.setString(2, entity.getTitle());
+            ps.setString(3, entity.getDescription());
+            ps.setBoolean(4, entity.getVerifiedPurchase());
+            ps.setInt(5, entity.getId().key1()); // productId
+            ps.setString(6, entity.getId().key2()); // userId
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error updating review: " + e.getMessage());
+        }
     }
 
     @Override
-    public void delete(CompositeKey<Integer, String> integerStringCompositeKey) {
-
+    public void delete(CompositeKey<Integer, String> key) {
+        Connection conn = dbUtils.getConnection();
+        String query = "DELETE FROM Reviews WHERE idProduct = ? AND idUser = ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, key.key1());
+            ps.setString(2, key.key2());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error deleting review: " + e.getMessage());
+        }
     }
 
     private Review extractReviewFromResultSet(ResultSet rs) throws SQLException {
