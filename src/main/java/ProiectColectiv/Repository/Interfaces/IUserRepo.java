@@ -6,5 +6,4 @@ import ProiectColectiv.Repository.DatabaseRepo.UserRepo;
 public interface IUserRepo extends Repository<String, User> {
     Iterable<User> getAllUsers();
     void updatePassword(User user);
-    public User findByToken(String token);
 }

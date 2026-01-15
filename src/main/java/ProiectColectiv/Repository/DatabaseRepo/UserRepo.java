@@ -158,38 +158,4 @@ public class UserRepo implements IUserRepo {
             System.err.println("Error DB updatePassword: " + e.getMessage());
         }
     }
-
-    @Override
-    public User findByToken(String token) {
-        Connection con = dbUtils.getConnection();
-        String query = "SELECT * FROM Users WHERE authToken=?";
-
-        try (PreparedStatement preStmt = con.prepareStatement(query)) {
-            preStmt.setString(1, token);
-
-            try (ResultSet rs = preStmt.executeQuery()) {
-                if (rs.next()) {
-                    String firstName = rs.getString("firstName");
-                    String lastName = rs.getString("lastName");
-                    String email = rs.getString("email");
-                    String password = rs.getString("password");
-                    boolean isAdmin = rs.getBoolean("isAdmin");
-                    String authToken = rs.getString("authToken");
-                    String adress = rs.getString("address");
-                    // Timestamp timestampLogin = rs.getTimestamp("lastLogin");
-                    String phoneNumber = rs.getString("phoneNumber");
-                    LocalDateTime lastLogin = parseLocalDateTime(rs.getString("lastLogin"));
-
-                    Date sqlDateCreated = rs.getDate("dateCreated");
-                    LocalDate dateCreated = (sqlDateCreated != null) ? sqlDateCreated.toLocalDate() : null;
-
-                    User user = new User(firstName, lastName, email, password, isAdmin, authToken, lastLogin, adress, dateCreated, phoneNumber);
-                    return user;
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error DB findByToken: " + e);
-        }
-        return null;
-    }
 }
