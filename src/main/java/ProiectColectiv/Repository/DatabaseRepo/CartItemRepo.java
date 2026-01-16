@@ -21,17 +21,17 @@ public class CartItemRepo implements ICartItemRepo {
     }
 
     @Override
-    public CartItem findById(CompositeKey<String, Integer> compositeKey) {
+    public CartItem findById(CompositeKey<Integer, Integer> compositeKey) {
         Connection con = dbUtils.getConnection();
         String query = "SELECT * FROM CartItems WHERE idOrder = ? AND idProduct = ?";
 
         try (PreparedStatement preStmt = con.prepareStatement(query)) {
-            preStmt.setString(1, compositeKey.key1()); // key1 este idOrder (String)
+            preStmt.setInt(1, compositeKey.key1()); // key1 este idOrder (String)
             preStmt.setInt(2, compositeKey.key2());   // key2 este productID (Integer)
 
             try (ResultSet rs = preStmt.executeQuery()) {
                 if (rs.next()) {
-                    String idOrder = rs.getString("idOrder");
+                    Integer idOrder = rs.getInt("idOrder");
                     Integer productID = rs.getInt("idProduct");
                     Integer nrOrdered = rs.getInt("nrOrdered");
 
@@ -50,7 +50,7 @@ public class CartItemRepo implements ICartItemRepo {
         String query = "INSERT INTO CartItems (idOrder, idProduct, nrOrdered) VALUES (?, ?, ?)";
 
         try (PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, entity.getOrderID());
+            ps.setInt(1, entity.getOrderID());
             ps.setInt(2, entity.getProductID());
             ps.setInt(3, entity.getNrOrdered());
 
@@ -68,7 +68,7 @@ public class CartItemRepo implements ICartItemRepo {
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, entity.getNrOrdered());
 
-            ps.setString(2, entity.getOrderID());   // key1 -> idOrder
+            ps.setInt(2, entity.getOrderID());   // key1 -> idOrder
             ps.setInt(3, entity.getProductID());    // key2 -> productID
 
             ps.executeUpdate();
@@ -78,12 +78,12 @@ public class CartItemRepo implements ICartItemRepo {
     }
 
     @Override
-    public void delete(CompositeKey<String, Integer> compositeKey) {
+    public void delete(CompositeKey<Integer, Integer> compositeKey) {
         Connection conn = dbUtils.getConnection();
         String query = "DELETE FROM CartItems WHERE idOrder = ? AND idProduct = ?";
 
         try (PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, compositeKey.key1()); // idOrder
+            ps.setInt(1, compositeKey.key1()); // idOrder
             ps.setInt(2, compositeKey.key2());   // productID
 
             ps.executeUpdate();
@@ -104,7 +104,7 @@ public class CartItemRepo implements ICartItemRepo {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    String currentIdOrder = rs.getString("idOrder");
+                    Integer currentIdOrder = rs.getInt("idOrder");
                     Integer productID = rs.getInt("idProduct");
                     Integer nrOrdered = rs.getInt("nrOrdered");
 

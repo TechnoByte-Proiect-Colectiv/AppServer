@@ -1,99 +1,101 @@
-create table Products
+DROP TABLE IF EXISTS Reviews;
+DROP TABLE IF EXISTS CartItems;
+DROP TABLE IF EXISTS Orders;
+DROP TABLE IF EXISTS Addresses;
+DROP TABLE IF EXISTS Users;
+DROP TABLE IF EXISTS Sellers;
+DROP TABLE IF EXISTS Products;
+
+
+CREATE TABLE Products
 (
-    id          INTEGER not null
-        constraint Products_pk
-            primary key autoincrement,
-    name        varchar not null,
-    description varchar,
-    price       float,
-    nrItems     INTEGER not null,
-    nrSold      integer not null,
-    slug        varchar,
-    brand       varchar,
-    currency    varchar,
-    category    varchar,
-    constraint check_nrItems
-        check ("Products".nrItems >= 0),
-    constraint check_price
-        check ("Products".price > 0),
-    constraint nrSold
-        check ("Products".nrSold >= 0)
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        VARCHAR NOT NULL,
+    description VARCHAR,
+    price       FLOAT CHECK (price > 0),
+    nrItems     INTEGER NOT NULL CHECK (nrItems >= 0),
+    nrSold      INTEGER NOT NULL CHECK (nrSold >= 0),
+    slug        VARCHAR,
+    brand       VARCHAR,
+    currency    VARCHAR,
+    category    VARCHAR
 );
 
-create table Sellers
+CREATE TABLE Sellers
 (
-    id          integer not null
-        constraint Sellers_pk
-            primary key autoincrement,
-    name        varchar not null,
-    description varchar
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        VARCHAR NOT NULL,
+    description VARCHAR
 );
 
-create table Users
+CREATE TABLE Users
 (
-    email       varchar not null
-        constraint Users_pk
-            unique,
-    password    varchar not null,
-    isAdmin     boolean,
-    authToken   integer,
-    lastLogin   datetime,
-    address     varchar,
-    dateCreated date    not null,
-    firstName   varchar,
-    lastName    varchar,
-    phoneNumber varchar
+    email       VARCHAR PRIMARY KEY,
+    password    VARCHAR NOT NULL,
+    isAdmin     BOOLEAN,
+    authToken   INTEGER,
+    lastLogin   DATETIME,
+    dateCreated DATE NOT NULL,
+    firstName   VARCHAR,
+    lastName    VARCHAR,
+    phoneNumber VARCHAR
 );
 
-create table Orders
+CREATE TABLE Addresses
 (
-    idUser          varchar not null
-        constraint Orders_Users_email_fk
-            references Users (email),
-    orderDate       date,
-    deliveryStatus  varchar,
-    totalProducts   float,
-    totalShipping   float,
-    totalPrice      float,
-    currency        varchar,
-    paymentMethod   varchar,
-    paymentStatus   boolean,
-    billingAddress  varchar,
-    shippingAddress varchar,
-    idOrder         integer not null
-        constraint Orders_pk
-            primary key
+    id          VARCHAR PRIMARY KEY, -- UUID generated in Java
+    userEmail   VARCHAR NOT NULL,
+    type        VARCHAR CHECK (type IN ('billing', 'shipping')),
+    firstName   VARCHAR,
+    lastName    VARCHAR,
+    street      VARCHAR,
+    city        VARCHAR,
+    county      VARCHAR,
+    postalCode  VARCHAR,
+    country     VARCHAR,
+    phoneNumber VARCHAR,
+    isPrimary   BOOLEAN DEFAULT 0,
+    CONSTRAINT Addresses_Users_fk FOREIGN KEY (userEmail) REFERENCES Users (email) ON DELETE CASCADE
 );
 
-create table CartItems
+CREATE TABLE Orders
 (
-    idOrder   varchar not null
-        constraint CartItems_Order_idUser_fk
-            references Orders,
-    idProduct integer not null
-        constraint CartItems_Products_id_fk
-            references Products,
-    nrOrdered integer not null,
-    constraint CartItems_pk
-        primary key (idOrder, idProduct),
-    constraint check_nrOrdered
-        check (nrOrdered > 0)
+    idOrder         INTEGER PRIMARY KEY,
+    idUser          VARCHAR NOT NULL,
+    orderDate       DATE,
+    deliveryStatus  VARCHAR,
+    totalProducts   FLOAT,
+    totalShipping   FLOAT,
+    totalPrice      FLOAT,
+    currency        VARCHAR,
+    paymentMethod   VARCHAR,
+    paymentStatus   BOOLEAN,
+    billingAddress  VARCHAR,
+    shippingAddress VARCHAR,
+    CONSTRAINT Orders_Users_email_fk
+        FOREIGN KEY (idUser) REFERENCES Users (email)
 );
 
-create table Reviews
+CREATE TABLE CartItems
 (
-    idProduct        integer not null
-        constraint Reviews_Products_id_fk
-            references Products,
-    idUser           varchar not null
-        constraint Reviews_Users_email_fk
-            references Users (email),
-    rating           integer not null,
-    title            varchar not null,
-    description      varchar,
-    createdAt        Date    not null,
-    verifiedPurchase boolean not null,
-    constraint Reviews_pk
-        primary key (idUser, idProduct)
+    idOrder   INTEGER NOT NULL,
+    idProduct INTEGER NOT NULL,
+    nrOrdered INTEGER NOT NULL CHECK (nrOrdered > 0),
+    PRIMARY KEY (idOrder, idProduct),
+    FOREIGN KEY (idOrder) REFERENCES Orders (idOrder),
+    FOREIGN KEY (idProduct) REFERENCES Products (id)
 );
 
+CREATE TABLE Reviews
+(
+    idProduct        INTEGER NOT NULL,
+    idUser           VARCHAR NOT NULL,
+    rating           INTEGER NOT NULL,
+    title            VARCHAR NOT NULL,
+    description      VARCHAR,
+    createdAt        DATE NOT NULL,
+    verifiedPurchase BOOLEAN NOT NULL,
+    PRIMARY KEY (idProduct, idUser),
+    FOREIGN KEY (idProduct) REFERENCES Products (id),
+    FOREIGN KEY (idUser) REFERENCES Users (email)
+);

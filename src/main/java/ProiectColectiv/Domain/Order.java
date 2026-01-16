@@ -13,13 +13,12 @@ public class Order extends Entity<Integer> {
     private Float totalShipping;
     private Float totalPrice;
 
-    private String currency;          // RON, EUR, USD, etc.
+    private String currency;
 
     private String paymentMethod;
     private Boolean paymentStatus;
     private String deliveryStatus;    // order status
 
-    // Campuri pentru adrese
     private String billingAddress;
     private String shippingAddress;
 
@@ -44,14 +43,12 @@ public class Order extends Entity<Integer> {
         this.shippingAddress = shippingAddress;
     }
 
-    // --- Getters si Setters ---
+    public Integer getId() { return super.getId(); }
 
-    public Integer getId() { return getId(); }
-
-    public void setId(Integer orderId) { setId(orderId); }
+    public void setId(Integer orderId) { super.setId(orderId); }
 
     public String getUserID() {
-        return getUserID();
+        return idUser;
     }
 
     public void setUserID(String userID) {

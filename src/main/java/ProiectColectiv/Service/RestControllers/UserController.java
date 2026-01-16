@@ -1,13 +1,16 @@
 package ProiectColectiv.Service.RestControllers;
 
+import ProiectColectiv.Domain.Address;
 import ProiectColectiv.Domain.LoginRequest;
 import ProiectColectiv.Domain.User;
+import ProiectColectiv.Repository.DatabaseRepo.UserRepo;
 import ProiectColectiv.Repository.Interfaces.IUserRepo;
 import ProiectColectiv.Repository.Utils.JWTUtils;
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -46,12 +49,89 @@ public class UserController {
 
             Map<String, Object> response = new HashMap<>();
             response.put("token", token);
-            response.put("email", repoUser.getEmail());
-            response.put("isAdmin", repoUser.isAdmin());
+            response.put("user", repoUser);
 
             return new ResponseEntity<>(response, HttpStatus.OK);
         } else {
             return new ResponseEntity<>("Wrong password", HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    @GetMapping("/address")
+    public ResponseEntity<?> getUserAddresses(@RequestHeader("Authorization") String authHeader) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            if (!jwtUtils.validateToken(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Token");
+
+            String userEmail = jwtUtils.extractEmail(token);
+            User user = userRepo.findById(userEmail);
+
+            if (user == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+
+            return ResponseEntity.ok(user.getAddresses());
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/address")
+    public ResponseEntity<?> addAddress(@RequestHeader("Authorization") String authHeader, @RequestBody Address address) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            if (!jwtUtils.validateToken(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Token");
+
+            String userEmail = jwtUtils.extractEmail(token);
+
+            if (userRepo instanceof UserRepo) {
+                ((UserRepo) userRepo).addAddress(userEmail, address);
+            } else {
+                // Fallback
+            }
+
+            return ResponseEntity.ok(address);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to add address: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/address/{addressId}")
+    public ResponseEntity<?> updateAddress(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable String addressId,
+            @RequestBody Address address) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            if (!jwtUtils.validateToken(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Token");
+
+            address.setId(addressId);
+
+            if (userRepo instanceof UserRepo) {
+                ((UserRepo) userRepo).updateAddress(address);
+            }
+
+            return ResponseEntity.ok(address);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update address: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/address/{addressId}")
+    public ResponseEntity<?> deleteAddress(@RequestHeader("Authorization") String authHeader, @PathVariable String addressId) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            if (!jwtUtils.validateToken(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Token");
+
+            if (userRepo instanceof UserRepo) {
+                ((UserRepo) userRepo).deleteAddress(addressId);
+            }
+
+            return ResponseEntity.ok("Address deleted successfully");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete address: " + e.getMessage());
         }
     }
 
@@ -66,6 +146,7 @@ public class UserController {
         user.setLastLogin(LocalDateTime.now());
 
         String token = jwtUtils.generateToken(user.getEmail(), user.isAdmin());
+        user.setAuthToken(token);
         userRepo.save(user);
 
         Map<String, Object> response = new HashMap<>();
@@ -94,8 +175,6 @@ public class UserController {
 
         existingUser.setFirstName(updatedUser.getFirstName());
         existingUser.setLastName(updatedUser.getLastName());
-        existingUser.setAdress(updatedUser.getAddress());
-        existingUser.setPhoneNumber(updatedUser.getPhoneNumber());
 
         if(updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
             existingUser.setPassword(BCrypt.withDefaults().hashToString(12, updatedUser.getPassword().toCharArray()));

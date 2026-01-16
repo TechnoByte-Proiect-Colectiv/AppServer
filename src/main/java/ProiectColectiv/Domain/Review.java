@@ -1,5 +1,7 @@
 package ProiectColectiv.Domain;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDate;
 
 public class Review extends Entity<CompositeKey<Integer,String>>{
@@ -10,6 +12,15 @@ public class Review extends Entity<CompositeKey<Integer,String>>{
     private String description;
     private LocalDate created_at;
     private Boolean verifiedPurchase;
+
+    @Override
+    @JsonProperty("id")
+    public CompositeKey<Integer, String> getId() {
+        if (super.getId() == null && productId != null && userId != null) {
+            super.setId(new CompositeKey<>(productId, userId));
+        }
+        return super.getId();
+    }
 
     public int getRating() {
         return rating;

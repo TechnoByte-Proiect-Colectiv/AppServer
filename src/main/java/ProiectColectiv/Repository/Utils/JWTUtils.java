@@ -13,7 +13,10 @@ import java.util.function.Function;
 @Component
 public class JWTUtils {
 
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private static final String SECRET_STRING = "lQWh6AxAoiDTgyRsReyu5KchO7pZwlKJqtLUS0EqvGLS01GzJzRkWedGcQlhA9Ok";
+
+    private final Key key = Keys.hmacShaKeyFor(SECRET_STRING.getBytes());
+
     private final long EXPIRATION_TIME = 86400000;
 
     public String generateToken(String email, boolean isAdmin) {
