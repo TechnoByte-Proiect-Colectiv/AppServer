@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,10 +23,14 @@ import java.util.Map;
 @RequestMapping("/api/user")
 public class UserController {
 
+    private final IUserRepo userRepo;
+    private final JWTUtils jwtUtils;
+
     @Autowired
-    private IUserRepo userRepo;
-    @Autowired
-    private JWTUtils jwtUtils;
+    public UserController(IUserRepo userRepo, JWTUtils jwtUtils) {
+        this.userRepo = userRepo;
+        this.jwtUtils = jwtUtils;
+    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
@@ -41,7 +44,6 @@ public class UserController {
 
             String token = jwtUtils.generateToken(repoUser.getEmail(), repoUser.isAdmin());
 
-            repoUser.setAuthToken(token);
             repoUser.setLastLogin(LocalDateTime.now());
             userRepo.update(repoUser);
 
@@ -143,10 +145,8 @@ public class UserController {
         user.setDateCreated(LocalDate.now());
         user.setLastLogin(LocalDateTime.now());
 
-        // Generare token imediat
         String token = jwtUtils.generateToken(user.getEmail(), user.isAdmin());
         user.setAuthToken(token);
-
         userRepo.save(user);
 
         Map<String, Object> response = new HashMap<>();
@@ -176,7 +176,9 @@ public class UserController {
         existingUser.setFirstName(updatedUser.getFirstName());
         existingUser.setLastName(updatedUser.getLastName());
 
-        if(updatedUser.getPassword() != null) existingUser.setPassword(BCrypt.withDefaults().hashToString(12, existingUser.getPassword().toCharArray()));;
+        if(updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
+            existingUser.setPassword(BCrypt.withDefaults().hashToString(12, updatedUser.getPassword().toCharArray()));
+        }
 
         userRepo.update(existingUser);
         return new ResponseEntity<>(existingUser, HttpStatus.OK);
