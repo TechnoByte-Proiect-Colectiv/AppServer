@@ -29,15 +29,6 @@ public class UserRepo implements IUserRepo {
         }
     }
 
-    private LocalDate parseLocalDate(String str) {
-        if (str == null || str.isEmpty()) return null;
-        try {
-            return LocalDate.parse(str);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     // Helper method to fetch addresses for a user
     private List<Address> getAddressesForUser(Connection con, String userEmail) {
         List<Address> addresses = new ArrayList<>();
@@ -89,7 +80,6 @@ public class UserRepo implements IUserRepo {
                 rs.getBoolean("isAdmin"),
                 rs.getString("authToken"),
                 parseLocalDateTime(rs.getString("lastLogin")),
-                rs.getString("address"),
                 parseLocalDate(rs.getString("dateCreated")),
                 rs.getString("phoneNumber")
         );
@@ -242,7 +232,6 @@ public class UserRepo implements IUserRepo {
         }
     }
 
-    @Override
     public User findByToken(String token) {
         Connection con = dbUtils.getConnection();
         String query = "SELECT * FROM Users WHERE authToken=?";
@@ -320,24 +309,10 @@ public class UserRepo implements IUserRepo {
                 }
                 return users;
             }
-            return users;
         } catch (SQLException e) {
             System.err.println("Error DB getAllUsers: " + e);
         }
         return users;
-    }
-
-    @Override
-    public void updatePassword(User entity) {
-        Connection con = dbUtils.getConnection();
-        String query = "UPDATE Users SET password=? WHERE email=?";
-        try (PreparedStatement ps = con.prepareStatement(query)) {
-            ps.setString(1, entity.getPassword());
-            ps.setString(2, entity.getEmail());
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            System.err.println("Error DB updatePassword: " + e.getMessage());
-        }
     }
 
     public void updateAddress(Address address) {
