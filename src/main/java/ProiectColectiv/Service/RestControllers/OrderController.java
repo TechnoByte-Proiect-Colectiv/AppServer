@@ -270,4 +270,52 @@ public class OrderController {
 
         return addr;
     }
+
+
+    // get all orders for admin panel
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllOrdersForAdmin() {
+        try {
+            Iterable<Order> allOrders = orderRepo.findAll();
+            List<Map<String, Object>> response = new ArrayList<>();
+
+            for (Order order : allOrders) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", order.getId());
+                map.put("userEmail", order.getUserID());
+                map.put("totalAmount", order.getTotalPrice());
+                map.put("orderStatus", order.getDeliveryStatus());
+                response.add(map);
+            }
+
+            Collections.reverse(response);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching all orders");
+        }
+    }
+
+    @PutMapping("/update-status")
+    public ResponseEntity<?> updateOrderStatus(@RequestBody Map<String, Object> payload) {
+        try {
+            Object idObj = payload.get("orderId");
+            String newStatus = (String) payload.get("status");
+
+            Integer orderId = (idObj instanceof String) ? Integer.parseInt((String) idObj) : (Integer) idObj;
+
+            Order order = orderRepo.findById(orderId);
+            if (order == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Order not found");
+            }
+
+            order.setDeliveryStatus(newStatus);
+            orderRepo.update(order);
+
+            return ResponseEntity.ok("Status updated successfully to: " + newStatus);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating status: " + e.getMessage());
+        }
+    }
 }

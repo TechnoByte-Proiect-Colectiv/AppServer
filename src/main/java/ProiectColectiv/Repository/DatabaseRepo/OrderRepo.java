@@ -191,4 +191,21 @@ public class OrderRepo implements IOrderRepo {
 
         return items;
     }
+
+    @Override
+    public Iterable<Order> findAll() {
+        List<Order> orders = new ArrayList<>();
+        Connection con = dbUtils.getConnection();
+        String query = "SELECT * FROM Orders";
+
+        try (PreparedStatement ps = con.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                orders.add(extractOrderFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error DB findAll Orders: " + e);
+        }
+        return orders;
+    }
 }
